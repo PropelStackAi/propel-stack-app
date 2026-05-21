@@ -52,12 +52,10 @@ export function estimateCost(model: ModelId, tokensIn: number, tokensOut: number
   return (tokensIn / 1_000_000) * c.in + (tokensOut / 1_000_000) * c.out;
 }
 
-/** Returns the configured API key for a model's provider, or undefined if none is set. */
-function providerKey(model: ModelId): string | undefined {
-  if (model === 'gpt-mini') return process.env.OPENAI_API_KEY || undefined;
-  if (model === 'claude-sonnet') return process.env.ANTHROPIC_API_KEY || undefined;
-  return process.env.GOOGLE_AI_API_KEY || undefined;
-}
+// Live provider clients (OpenAI/Anthropic/Google) attach in complete() below, keyed off
+// OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_AI_API_KEY. They are not implemented yet, so
+// every answer is a deterministic stub regardless of which keys are configured. (Outbound
+// HTTPS is also currently blocked by the network's TLS interception -- see weather.)
 
 const PLAN_TOKEN_BUDGETS: Record<string, number> = {
   spark: 25_000,
@@ -117,17 +115,17 @@ export function complete(opts: CompleteOptions): CompleteResult {
   checkBudget(userId, tokensIn * 2);
 
   // ---- Provider call ----
-  // Live provider streaming (OpenAI / Anthropic / Google) wires in here once the matching
-  // API key is set in the environment. Until then we return a deterministic, conversational
-  // stub so the whole Assistant -- streaming, history, model/mode routing, and per-plan
-  // budgets -- works end-to-end without burning credits.
+  // Live provider streaming (OpenAI / Anthropic / Google) wires in here. It is not yet
+  // implemented, so every answer is a deterministic, conversational stub -- which still
+  // exercises the whole Assistant (streaming, history, model/mode routing, per-plan
+  // budgets) without burning credits.
   const text = buildStubAnswer(opts, model);
   // -----------------------
 
   const tokensOut = estimateTokens(text);
   recordUsage(userId, tokensIn + tokensOut);
 
-  return { text, tokensIn, tokensOut, model, stub: !providerKey(model) };
+  return { text, tokensIn, tokensOut, model, stub: true };
 }
 
 /**
@@ -173,12 +171,11 @@ function buildStubAnswer(opts: CompleteOptions, model: ModelId): string {
   const mode = opts.mode ?? 'general';
   const q = opts.prompt.trim();
   return [
-    `Here is a ${mode}-mode response from ${MODEL_LABELS[model]}. This is the demo gateway:`,
-    'no provider API key is configured yet, so the text below is a deterministic placeholder.',
+    `Here is a ${mode}-mode response from ${MODEL_LABELS[model]} (demo gateway placeholder).`,
     q ? `You asked: "${q.slice(0, 240)}".` : '',
-    'Once an API key for this provider is added to the server environment, this same endpoint',
-    'will stream a real model answer token by token. Conversation history, model and mode',
-    'selection, token accounting, and per-plan budget limits are all fully functional right now.',
+    'Live model responses activate once the provider call is wired into the gateway. For now',
+    'this text is deterministic, but conversation history, model and mode selection, token',
+    'accounting, and per-plan budget limits are all fully functional.',
   ]
     .filter(Boolean)
     .join(' ');

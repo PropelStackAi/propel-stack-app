@@ -494,6 +494,85 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_ai_msg_conv ON ai_messages(conversation_id, created_at);
     `,
   },
+  // ---- Session 5: Dashboard ----
+  {
+    version: 15,
+    name: 'tasks',
+    sql: `
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        due_date TEXT,                          -- ISO date or NULL
+        completed_at TEXT,                      -- ISO timestamp or NULL
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id, due_date);
+    `,
+  },
+  {
+    version: 16,
+    name: 'habits',
+    sql: `
+      CREATE TABLE IF NOT EXISTS habits (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
+    `,
+  },
+  {
+    version: 17,
+    name: 'habit_completions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS habit_completions (
+        id TEXT PRIMARY KEY,
+        habit_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        completed_on TEXT NOT NULL,             -- ISO date (YYYY-MM-DD)
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE (habit_id, completed_on),
+        FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_habit_comp ON habit_completions(habit_id, completed_on);
+    `,
+  },
+  {
+    version: 18,
+    name: 'notes',
+    sql: `
+      CREATE TABLE IF NOT EXISTS notes (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT '',
+        body TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id, created_at);
+    `,
+  },
+  {
+    version: 19,
+    name: 'activity_log',
+    sql: `
+      CREATE TABLE IF NOT EXISTS activity_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        kind TEXT NOT NULL,                     -- task | note | contact | expense | habit
+        summary TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id, created_at);
+    `,
+  },
 ];
 
 export function runMigrations(): void {

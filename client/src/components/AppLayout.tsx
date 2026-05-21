@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
+import { QuickCapture } from '../features/dashboard/components/QuickCapture';
 
 interface NavItem {
   href: string;
@@ -49,6 +50,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
       <EmergencyButton />
+      <QuickCapture />
     </div>
   );
 }
