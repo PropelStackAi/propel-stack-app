@@ -3,7 +3,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import path from 'node:path';
 import fs from 'node:fs';
-import { runMigrations, db, getCurrentUserId } from './db.js';
+import { initDb, runMigrations, db, getCurrentUserId } from './db.js';
 import { contactsRouter } from './routes/contacts.js';
 
 const app = express();
@@ -62,9 +62,17 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // ---- Bootstrap ----
-runMigrations();
-
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`[server] listening on http://localhost:${PORT}`);
-});
+// sql.js needs one async step (WASM load) before the synchronous DB surface is usable.
+initDb()
+  .then(() => {
+    runMigrations();
+    app.listen(PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`[server] listening on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error('[server] failed to initialize database', err);
+    process.exit(1);
+  });

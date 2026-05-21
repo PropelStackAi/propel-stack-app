@@ -11,7 +11,7 @@ Project skeleton with everything the feature sessions need to plug into:
 
 - **Frontend** — React 18 + TypeScript + Vite + Wouter (hash routing) + TanStack Query v5 + Tailwind
 - **Backend** — Node.js + Express + TypeScript (bundles to `dist/index.cjs`)
-- **Database** — SQLite via `better-sqlite3` (synchronous), versioned migrations
+- **Database** — SQLite via `sql.js` (pure-WASM — zero native build, runs on any Node version), versioned migrations, synchronous query surface
 - **AI gateway** — single chokepoint at `server/ai-gateway.ts` with token-budget enforcement and crisis/injury detection
 - **Reduced-motion CSS** — already at the top of the global stylesheet (seizure safety, Session 6 requirement applied from day one)
 - **Branded shell** — header, sidebar, emergency button, brand colors, Cabinet Grotesk + Plus Jakarta Sans via Fontshare
@@ -25,6 +25,11 @@ Project skeleton with everything the feature sessions need to plug into:
 5. SQLite is synchronous — `.get()` for single rows, `.all()` for arrays, no `await`
 
 (Rule 5 applies through Session 7. Session 8 migrates to Postgres and switches to async.)
+
+The DB engine is `sql.js` (WebAssembly SQLite), wrapped to keep the synchronous
+`.get()`/`.all()`/`.run()` surface. The only async step is a single `initDb()` at
+startup (loads the WASM module); the in-memory image is persisted to `data/propel.db`
+on a debounced write after each change.
 
 ## Local development
 
@@ -55,7 +60,7 @@ npm start        # serves both from port 5000
 propel-stack-app/
 ├── server/
 │   ├── index.ts          # Express entry, mounts routes
-│   ├── db.ts             # SQLite + migrations (synchronous)
+│   ├── db.ts             # sql.js (WASM SQLite) + migrations; sync surface, async init
 │   └── ai-gateway.ts     # All AI calls go through here
 ├── client/
 │   ├── index.html        # Fontshare links
@@ -72,7 +77,7 @@ propel-stack-app/
 │   │   └── styles/
 │   │       └── globals.css  # Reduced-motion rules FIRST
 │   └── vite.config.ts    # Proxies /api to Express
-├── data/                 # SQLite database lives here (gitignored)
+├── data/                 # SQLite image (sql.js) persisted here (gitignored)
 ├── package.json
 └── tsconfig.json
 ```
