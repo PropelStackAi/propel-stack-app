@@ -573,6 +573,46 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id, created_at);
     `,
   },
+  // ---- Session 7: Document Vault ----
+  // Local fallback: files are stored as base64 in `data` until Session 8 moves them to
+  // Supabase Storage. Uploads are size-capped in the route to keep the sql.js image small.
+  {
+    version: 20,
+    name: 'documents',
+    sql: `
+      CREATE TABLE IF NOT EXISTS documents (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'Other',
+        file_name TEXT NOT NULL DEFAULT '',
+        file_type TEXT NOT NULL DEFAULT '',     -- MIME type
+        file_size INTEGER NOT NULL DEFAULT 0,    -- raw bytes
+        data TEXT NOT NULL DEFAULT '',           -- base64 (local fallback; -> Supabase in Session 8)
+        expiry_date TEXT,                        -- ISO date or NULL
+        tags TEXT NOT NULL DEFAULT '[]',         -- JSON array of strings
+        ai_summary TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id, category);
+    `,
+  },
+  {
+    version: 21,
+    name: 'document_shares',
+    sql: `
+      CREATE TABLE IF NOT EXISTS document_shares (
+        token TEXT PRIMARY KEY,
+        document_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        expires_at TEXT NOT NULL,                -- ISO timestamp
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_doc_shares_doc ON document_shares(document_id);
+    `,
+  },
 ];
 
 export function runMigrations(): void {

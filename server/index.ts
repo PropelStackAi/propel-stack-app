@@ -8,6 +8,7 @@ import { contactsRouter } from './routes/contacts.js';
 import { financialRouter } from './routes/financial.js';
 import { assistantRouter } from './routes/assistant.js';
 import { dashboardRouter } from './routes/dashboard.js';
+import { documentsRouter } from './routes/documents.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -39,6 +40,7 @@ app.use('/api/contacts', contactsRouter);             // Session 2 -- Personal C
 app.use('/api/financial', financialRouter);           // Session 3 -- Financial Hub
 app.use('/api/assistant', assistantRouter);           // Session 4 -- AI Assistant
 app.use('/api/dashboard', dashboardRouter);           // Session 5 -- Dashboard
+app.use('/api/documents', documentsRouter);           // Session 7 -- Document Vault
 // ---- Future route modules will be mounted here ----
 // app.use('/api/assistant', assistantRouter);        // Session 4
 // app.use('/api/dashboard', dashboardRouter);        // Session 5
