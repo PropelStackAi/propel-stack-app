@@ -57,6 +57,60 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       VALUES ('demo-user', 'demo@propelstack.ai', 'Demo User', 'spark');
     `,
   },
+  // ---- Session 2: Personal CRM ----
+  {
+    version: 4,
+    name: 'contacts',
+    sql: `
+      CREATE TABLE IF NOT EXISTS contacts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        first_name TEXT NOT NULL DEFAULT '',
+        last_name TEXT NOT NULL DEFAULT '',
+        company TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL DEFAULT '',
+        phones TEXT NOT NULL DEFAULT '[]',       -- JSON array of { label, value }
+        emails TEXT NOT NULL DEFAULT '[]',       -- JSON array of { label, value }
+        address TEXT NOT NULL DEFAULT '',
+        website TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        category TEXT NOT NULL DEFAULT 'Personal',
+        contact_type TEXT NOT NULL DEFAULT 'personal',  -- 'personal' | 'service'
+        tags TEXT NOT NULL DEFAULT '[]',         -- JSON array of strings
+        birthday TEXT,                           -- ISO date (YYYY-MM-DD) or NULL
+        last_contact TEXT,                       -- ISO date or NULL
+        next_follow_up TEXT,                     -- ISO date or NULL
+        relationship_score INTEGER NOT NULL DEFAULT 3,  -- 1..5
+        how_met TEXT NOT NULL DEFAULT '',
+        photo TEXT NOT NULL DEFAULT '',          -- base64 data URL or remote URL
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_contacts_user ON contacts(user_id);
+      CREATE INDEX IF NOT EXISTS idx_contacts_category ON contacts(user_id, category);
+      CREATE INDEX IF NOT EXISTS idx_contacts_follow_up ON contacts(user_id, next_follow_up);
+    `,
+  },
+  {
+    version: 5,
+    name: 'contact_interactions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS contact_interactions (
+        id TEXT PRIMARY KEY,
+        contact_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'note',       -- call | email | meeting | note | other
+        occurred_at TEXT NOT NULL,               -- ISO date
+        notes TEXT NOT NULL DEFAULT '',
+        outcome TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_interactions_contact ON contact_interactions(contact_id);
+    `,
+  },
 ];
 
 export function runMigrations(): void {

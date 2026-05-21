@@ -103,6 +103,45 @@ export function complete(opts: CompleteOptions): CompleteResult {
 }
 
 /**
+ * Business-card extraction. Personal CRM (Session 2) calls this when a user captures
+ * a business card photo. Vision-model wiring lands in Session 4 alongside complete().
+ *
+ * Until then this returns empty fields with `stubbed: true` so the capture flow works
+ * end-to-end: the form opens pre-filled with whatever is returned (nothing, for now)
+ * and the user completes it manually. The frontend never talks to a model directly.
+ */
+export interface ExtractedCardFields {
+  firstName: string;
+  lastName: string;
+  company: string;
+  title: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
+export interface ExtractBusinessCardResult {
+  fields: ExtractedCardFields;
+  stubbed: boolean;
+  note?: string;
+}
+
+export function extractBusinessCard(_imageDataUrl: string): ExtractBusinessCardResult {
+  // ---- STUB ----
+  // Session 4 swaps this for a real vision call (e.g. GPT-5.4 Mini / Gemini 3 Flash)
+  // routed through the same budget + usage accounting as complete().
+  const empty: ExtractedCardFields = {
+    firstName: '', lastName: '', company: '', title: '', phone: '', email: '', website: '',
+  };
+  return {
+    fields: empty,
+    stubbed: true,
+    note: 'AI business-card extraction activates in Session 4. Review and complete the fields.',
+  };
+  // ---------------
+}
+
+/**
  * Crisis keyword scan. SNFS (Session 12) calls this BEFORE invoking complete().
  * If true, the route returns crisis resources and never reaches the model.
  */
