@@ -332,6 +332,129 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_interactions_contact ON contact_interactions(contact_id);
     `,
   },
+  // ---- Session 3: Financial Hub ----
+  {
+    version: 6,
+    name: 'financial_disclaimer_acknowledgments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS financial_disclaimer_acknowledgments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        acknowledged_at TEXT NOT NULL DEFAULT (datetime('now')),
+        signature_name TEXT NOT NULL,
+        ip_address TEXT NOT NULL DEFAULT '',
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_disc_user ON financial_disclaimer_acknowledgments(user_id, version);
+    `,
+  },
+  {
+    version: 7,
+    name: 'budget_categories',
+    sql: `
+      CREATE TABLE IF NOT EXISTS budget_categories (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'expense',   -- 'income' | 'expense'
+        monthly_budget REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_budget_cat_user ON budget_categories(user_id);
+    `,
+  },
+  {
+    version: 8,
+    name: 'transactions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        category_id TEXT,
+        type TEXT NOT NULL DEFAULT 'expense',   -- 'income' | 'expense'
+        amount REAL NOT NULL DEFAULT 0,
+        description TEXT NOT NULL DEFAULT '',
+        occurred_at TEXT NOT NULL,              -- ISO date
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_tx_user ON transactions(user_id, occurred_at);
+    `,
+  },
+  {
+    version: 9,
+    name: 'bills',
+    sql: `
+      CREATE TABLE IF NOT EXISTS bills (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        due_date TEXT NOT NULL,                 -- ISO date
+        recurrence TEXT NOT NULL DEFAULT 'none',-- none | weekly | monthly | yearly
+        is_paid INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_bills_user ON bills(user_id, due_date);
+    `,
+  },
+  {
+    version: 10,
+    name: 'financial_goals',
+    sql: `
+      CREATE TABLE IF NOT EXISTS financial_goals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL DEFAULT 'custom',    -- emergency_fund | home | retirement | custom
+        target_amount REAL NOT NULL DEFAULT 0,
+        current_amount REAL NOT NULL DEFAULT 0,
+        target_date TEXT,                       -- ISO date or NULL
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_goals_user ON financial_goals(user_id);
+    `,
+  },
+  {
+    version: 11,
+    name: 'net_worth_snapshots',
+    sql: `
+      CREATE TABLE IF NOT EXISTS net_worth_snapshots (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        snapshot_date TEXT NOT NULL,            -- ISO date
+        assets TEXT NOT NULL DEFAULT '[]',      -- JSON array of { label, value }
+        liabilities TEXT NOT NULL DEFAULT '[]', -- JSON array of { label, value }
+        net_worth REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_nw_user ON net_worth_snapshots(user_id, snapshot_date);
+    `,
+  },
+  {
+    version: 12,
+    name: 'investments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS investments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        symbol TEXT NOT NULL DEFAULT '',
+        shares REAL NOT NULL DEFAULT 0,
+        cost_basis REAL NOT NULL DEFAULT 0,     -- total cost
+        current_value REAL NOT NULL DEFAULT 0,  -- total current value
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_investments_user ON investments(user_id);
+    `,
+  },
 ];
 
 export function runMigrations(): void {
