@@ -42,10 +42,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-surface">
+      {/* Skip link: focuses main without changing the hash (so it doesn't break hash routing). */}
+      <a
+        href="#main-content"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('main-content')?.focus();
+        }}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-brand-indigo focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
       <Header user={user} />
       <div className="flex-1 flex">
         <Sidebar currentPath={location} />
-        <main className="flex-1 min-w-0 px-6 py-8 lg:px-10">
+        <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 px-6 py-8 lg:px-10 outline-none">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
