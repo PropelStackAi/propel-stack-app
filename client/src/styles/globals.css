@@ -1,0 +1,87 @@
+/* =========================================================================
+   REQUIRED SEIZURE SAFETY -- DO NOT MODIFY, DO NOT MOVE
+   This MUST be the first ruleset in the global stylesheet so that any
+   subsequent animation/transition declarations are suppressed when the
+   user has expressed a motion preference at the OS level.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-indigo: #4F35C2;
+    --brand-coral:  #F05A28;
+    --brand-teal:   #01696F;
+    --brand-purple: #6B21A8;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    @apply font-body text-surface-ink bg-surface antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Visible focus ring for keyboard navigation (accessibility) */
+  :focus-visible {
+    outline: 2px solid var(--brand-indigo);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--brand-indigo);
+    color: white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-brand-indigo px-5 py-2.5 text-sm font-semibold text-white
+           shadow-card hover:brightness-110 active:brightness-95
+           transition-[filter,transform] duration-150 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-surface-ink/10 bg-surface-raised px-5 py-2.5
+           text-sm font-semibold text-surface-ink shadow-card
+           hover:bg-surface-sunk transition-colors duration-150;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-brand-coral px-5 py-2.5 text-sm font-semibold text-white
+           shadow-card hover:brightness-110 active:brightness-95
+           transition-[filter,transform] duration-150 active:scale-[0.98];
+  }
+
+  .card {
+    @apply rounded-xl2 bg-surface-raised shadow-card border border-surface-ink/[0.04] p-6;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
+           text-xs font-medium border border-surface-ink/10 bg-surface-raised;
+  }
+}
