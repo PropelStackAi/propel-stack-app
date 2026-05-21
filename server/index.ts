@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { initDb, runMigrations, db, getCurrentUserId } from './db.js';
 import { contactsRouter } from './routes/contacts.js';
 import { financialRouter } from './routes/financial.js';
+import { assistantRouter } from './routes/assistant.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -35,6 +36,7 @@ app.get('/api/me', (_req, res) => {
 // ---- Feature route modules ----
 app.use('/api/contacts', contactsRouter);             // Session 2 -- Personal CRM
 app.use('/api/financial', financialRouter);           // Session 3 -- Financial Hub
+app.use('/api/assistant', assistantRouter);           // Session 4 -- AI Assistant
 // ---- Future route modules will be mounted here ----
 // app.use('/api/assistant', assistantRouter);        // Session 4
 // app.use('/api/dashboard', dashboardRouter);        // Session 5

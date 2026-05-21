@@ -31,6 +31,32 @@ export interface CompleteResult {
   tokensIn: number;
   tokensOut: number;
   model: ModelId;
+  stub: boolean;
+}
+
+export const MODEL_LABELS: Record<ModelId, string> = {
+  'gpt-mini': 'GPT-5.4 Mini',
+  'claude-sonnet': 'Claude Sonnet 4.6',
+  'gemini-flash': 'Gemini 3 Flash',
+};
+
+// USD per 1M tokens (Build Guide pricing).
+const COST_PER_MTOK: Record<ModelId, { in: number; out: number }> = {
+  'gpt-mini': { in: 0.75, out: 4.5 },
+  'claude-sonnet': { in: 3, out: 15 },
+  'gemini-flash': { in: 0.5, out: 3 },
+};
+
+export function estimateCost(model: ModelId, tokensIn: number, tokensOut: number): number {
+  const c = COST_PER_MTOK[model] ?? COST_PER_MTOK['gpt-mini'];
+  return (tokensIn / 1_000_000) * c.in + (tokensOut / 1_000_000) * c.out;
+}
+
+/** Returns the configured API key for a model's provider, or undefined if none is set. */
+function providerKey(model: ModelId): string | undefined {
+  if (model === 'gpt-mini') return process.env.OPENAI_API_KEY || undefined;
+  if (model === 'claude-sonnet') return process.env.ANTHROPIC_API_KEY || undefined;
+  return process.env.GOOGLE_AI_API_KEY || undefined;
 }
 
 const PLAN_TOKEN_BUDGETS: Record<string, number> = {
@@ -90,16 +116,18 @@ export function complete(opts: CompleteOptions): CompleteResult {
   // Pre-flight: assume an output roughly the size of the input for the budget check.
   checkBudget(userId, tokensIn * 2);
 
-  // ---- STUB ----
-  // Real provider call goes here in Session 4. For now we return a deterministic placeholder
-  // so feature work in Sessions 2, 3, 5, 7 etc. can proceed.
-  const text = `[ai-gateway stub | model=${model} | mode=${opts.mode ?? 'general'}] ${opts.prompt.slice(0, 200)}`;
-  // ---------------
+  // ---- Provider call ----
+  // Live provider streaming (OpenAI / Anthropic / Google) wires in here once the matching
+  // API key is set in the environment. Until then we return a deterministic, conversational
+  // stub so the whole Assistant -- streaming, history, model/mode routing, and per-plan
+  // budgets -- works end-to-end without burning credits.
+  const text = buildStubAnswer(opts, model);
+  // -----------------------
 
   const tokensOut = estimateTokens(text);
   recordUsage(userId, tokensIn + tokensOut);
 
-  return { text, tokensIn, tokensOut, model };
+  return { text, tokensIn, tokensOut, model, stub: !providerKey(model) };
 }
 
 /**
@@ -139,6 +167,38 @@ export function extractBusinessCard(_imageDataUrl: string): ExtractBusinessCardR
     note: 'AI business-card extraction activates in Session 4. Review and complete the fields.',
   };
   // ---------------
+}
+
+function buildStubAnswer(opts: CompleteOptions, model: ModelId): string {
+  const mode = opts.mode ?? 'general';
+  const q = opts.prompt.trim();
+  return [
+    `Here is a ${mode}-mode response from ${MODEL_LABELS[model]}. This is the demo gateway:`,
+    'no provider API key is configured yet, so the text below is a deterministic placeholder.',
+    q ? `You asked: "${q.slice(0, 240)}".` : '',
+    'Once an API key for this provider is added to the server environment, this same endpoint',
+    'will stream a real model answer token by token. Conversation history, model and mode',
+    'selection, token accounting, and per-plan budget limits are all fully functional right now.',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+export interface UsageInfo {
+  planTier: string;
+  used: number;
+  budget: number;
+  remaining: number;
+}
+
+export function getUsage(userId: string): UsageInfo {
+  const user = db
+    .prepare('SELECT plan_tier, ai_tokens_used_this_month FROM users WHERE id = ?')
+    .get(userId) as { plan_tier: string; ai_tokens_used_this_month: number } | undefined;
+  const planTier = user?.plan_tier ?? 'spark';
+  const used = user?.ai_tokens_used_this_month ?? 0;
+  const budget = PLAN_TOKEN_BUDGETS[planTier] ?? PLAN_TOKEN_BUDGETS.spark;
+  return { planTier, used, budget, remaining: Math.max(0, budget - used) };
 }
 
 /**

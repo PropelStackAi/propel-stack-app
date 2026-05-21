@@ -455,6 +455,45 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_investments_user ON investments(user_id);
     `,
   },
+  // ---- Session 4: AI Assistant ----
+  {
+    version: 13,
+    name: 'ai_conversations',
+    sql: `
+      CREATE TABLE IF NOT EXISTS ai_conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT 'New conversation',
+        model TEXT NOT NULL DEFAULT 'gpt-mini',
+        mode TEXT NOT NULL DEFAULT 'general',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_conv_user ON ai_conversations(user_id, updated_at);
+    `,
+  },
+  {
+    version: 14,
+    name: 'ai_messages',
+    sql: `
+      CREATE TABLE IF NOT EXISTS ai_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,                     -- 'user' | 'assistant'
+        content TEXT NOT NULL DEFAULT '',
+        tokens_in INTEGER NOT NULL DEFAULT 0,
+        tokens_out INTEGER NOT NULL DEFAULT 0,
+        model TEXT NOT NULL DEFAULT '',
+        rating INTEGER NOT NULL DEFAULT 0,      -- -1 | 0 | 1
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_msg_conv ON ai_messages(conversation_id, created_at);
+    `,
+  },
 ];
 
 export function runMigrations(): void {
