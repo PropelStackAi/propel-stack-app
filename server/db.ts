@@ -1,247 +1,105 @@
-import path from 'node:path';
-import fs from 'node:fs';
-import { createRequire } from 'node:module';
-import initSqlJs from 'sql.js';
-import type { Database as SqlJsDatabase, SqlValue, BindParams } from 'sql.js';
+import { Pool, type QueryResult } from 'pg';
 
 /**
- * Database layer (sql.js / pure-WASM SQLite).
+ * Database layer — PostgreSQL via pg (Session 8).
  *
- * Why sql.js: zero native compilation — works on any Node version, any OS, with no
- * prebuilt binaries or build toolchain. The trade-off is that the engine is in-memory,
- * so we own persistence: the database image is read from disk on startup and written
- * back (debounced) after writes.
- *
- * The exported `db` keeps a SYNCHRONOUS, better-sqlite3-compatible surface
- * (prepare().get()/.all()/.run(), exec(), pragma(), transaction()) so feature/route
- * code stays unchanged and HARD RULE #5 (synchronous DB access, no await) still holds.
- * The ONLY async step is initDb(), which loads the WASM module once at boot.
+ * Provides a prepare().get/all/run() API that mirrors the previous sql.js surface
+ * so route code only needs `await` added to each call. Named params (@col style)
+ * and positional ? params are both converted to pg's $1, $2, $3 syntax.
  */
 
-// Anchor module resolution to the project root. Using process.cwd() (rather than
-// import.meta.url) keeps this working identically under tsx (ESM dev) and the esbuild
-// CJS bundle, where import.meta is unavailable.
-const requireFromRoot = createRequire(path.join(process.cwd(), 'package.json'));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+});
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'propel.db');
-const SAVE_DEBOUNCE_MS = 250;
-
-function ensureDataDir(): void {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
-/** Locate sql-wasm.wasm both under tsx (dev) and the esbuild CJS bundle (prod). */
-function wasmPath(file: string): string {
-  try {
-    return requireFromRoot.resolve(`sql.js/dist/${file}`);
-  } catch {
-    return path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file);
-  }
-}
-
-type Params = unknown[];
-
-function isPlainObject(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v) && !(v instanceof Uint8Array);
-}
-
-function toSqlValue(v: unknown): SqlValue {
-  if (v === undefined || v === null) return null;
-  if (typeof v === 'boolean') return v ? 1 : 0;
-  if (typeof v === 'bigint') return Number(v);
-  return v as SqlValue;
-}
-
-/**
- * Map better-sqlite3-style params onto sql.js bind params.
- * - a single plain object  -> named params (@name / :name / $name)
- * - everything else        -> positional (?) params
- */
-function normalizeParams(sql: string, params: Params): BindParams | undefined {
-  if (params.length === 0) return undefined;
-  if (params.length === 1 && isPlainObject(params[0])) {
-    const obj = params[0];
-    const named: Record<string, SqlValue> = {};
-    const re = /[@:$]([a-zA-Z_]\w*)/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(sql)) !== null) {
-      named[m[0]] = toSqlValue(obj[m[1]]); // key includes prefix, e.g. '@id'
-    }
-    return named;
-  }
-  return params.map(toSqlValue);
-}
+pool.on('error', (err) => {
+  console.error('[db] pool error', err);
+});
 
 export interface RunResult {
   changes: number;
   lastInsertRowid: number;
 }
 
-class Statement {
-  constructor(private owner: Db, private sql: string) {}
+type Params = unknown[];
 
-  run(...params: Params): RunResult {
-    const sdb = this.owner.handle();
-    const stmt = sdb.prepare(this.sql);
-    try {
-      const bound = normalizeParams(this.sql, params);
-      if (bound !== undefined) stmt.bind(bound);
-      stmt.step();
-      const changes = sdb.getRowsModified();
-      const lastInsertRowid = lastRowid(sdb);
-      this.owner.markDirty();
-      return { changes, lastInsertRowid };
-    } finally {
-      stmt.free();
-    }
-  }
-
-  get(...params: Params): unknown {
-    const sdb = this.owner.handle();
-    const stmt = sdb.prepare(this.sql);
-    try {
-      const bound = normalizeParams(this.sql, params);
-      if (bound !== undefined) stmt.bind(bound);
-      return stmt.step() ? stmt.getAsObject() : undefined;
-    } finally {
-      stmt.free();
-    }
-  }
-
-  all(...params: Params): unknown[] {
-    const sdb = this.owner.handle();
-    const stmt = sdb.prepare(this.sql);
-    const rows: unknown[] = [];
-    try {
-      const bound = normalizeParams(this.sql, params);
-      if (bound !== undefined) stmt.bind(bound);
-      while (stmt.step()) rows.push(stmt.getAsObject());
-    } finally {
-      stmt.free();
-    }
-    return rows;
-  }
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-function lastRowid(sdb: SqlJsDatabase): number {
-  const res = sdb.exec('SELECT last_insert_rowid() AS id');
-  const val = res[0]?.values?.[0]?.[0];
-  return typeof val === 'number' ? val : 0;
+/**
+ * Converts sql.js-style SQL + params to pg $1,$2 format.
+ * - Named params (@col or :col) with a single plain-object argument
+ * - Positional ? params with array/spread arguments
+ * Also replaces SQLite datetime('now') with NOW().
+ */
+function toPostgres(sql: string, params: Params): { text: string; values: unknown[] } {
+  const s = sql.replace(/datetime\('now'\)/gi, 'NOW()');
+
+  if (params.length === 0) return { text: s, values: [] };
+
+  if (params.length === 1 && isPlainObject(params[0])) {
+    const obj = params[0];
+    const values: unknown[] = [];
+    const used = new Map<string, number>();
+    const text = s.replace(/[@:]([a-zA-Z_]\w*)/g, (_, name: string) => {
+      if (!used.has(name)) {
+        values.push(obj[name] ?? null);
+        used.set(name, values.length);
+      }
+      return `$${used.get(name)}`;
+    });
+    return { text, values };
+  }
+
+  const flat = params.flat();
+  let i = 0;
+  const text = s.replace(/\?/g, () => `$${++i}`);
+  return { text, values: flat };
+}
+
+class Statement {
+  constructor(private sql: string) {}
+
+  async get(...params: Params): Promise<Record<string, unknown> | undefined> {
+    const { text, values } = toPostgres(this.sql, params);
+    const result: QueryResult = await pool.query(text, values);
+    return result.rows[0];
+  }
+
+  async all(...params: Params): Promise<Record<string, unknown>[]> {
+    const { text, values } = toPostgres(this.sql, params);
+    const result: QueryResult = await pool.query(text, values);
+    return result.rows;
+  }
+
+  async run(...params: Params): Promise<RunResult> {
+    const { text, values } = toPostgres(this.sql, params);
+    const result: QueryResult = await pool.query(text, values);
+    return { changes: result.rowCount ?? 0, lastInsertRowid: 0 };
+  }
 }
 
 class Db {
-  private sql: SqlJsDatabase | null = null;
-  private dirty = false;
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private exitHooked = false;
-
-  attach(sql: SqlJsDatabase): void {
-    this.sql = sql;
-    this.hookExit();
-  }
-
-  handle(): SqlJsDatabase {
-    if (!this.sql) throw new Error('Database not initialized -- call initDb() first.');
-    return this.sql;
-  }
-
   prepare(sql: string): Statement {
-    return new Statement(this, sql);
+    return new Statement(sql);
   }
 
-  exec(sql: string): void {
-    this.handle().run(sql);
-    this.markDirty();
-  }
-
-  pragma(directive: string): void {
-    // sql.js is in-memory: WAL/synchronous pragmas are no-ops; foreign_keys is honored.
-    try {
-      this.handle().run(`PRAGMA ${directive};`);
-    } catch {
-      /* unsupported pragma -- ignore */
-    }
-  }
-
-  transaction<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
-    return (...args: A): R => {
-      const sdb = this.handle();
-      sdb.run('BEGIN');
-      try {
-        const result = fn(...args);
-        sdb.run('COMMIT');
-        this.markDirty();
-        return result;
-      } catch (err) {
-        try {
-          sdb.run('ROLLBACK');
-        } catch {
-          /* ignore rollback failure */
-        }
-        throw err;
-      }
-    };
-  }
-
-  markDirty(): void {
-    this.dirty = true;
-    if (this.timer) return;
-    this.timer = setTimeout(() => {
-      this.timer = null;
-      this.flush();
-    }, SAVE_DEBOUNCE_MS);
-  }
-
-  /** Persist the in-memory image to disk atomically (tmp file + rename). */
-  flush(): void {
-    if (!this.sql || !this.dirty) return;
-    const data = Buffer.from(this.sql.export());
-    const tmp = `${DB_PATH}.tmp`;
-    fs.writeFileSync(tmp, data);
-    fs.renameSync(tmp, DB_PATH);
-    this.dirty = false;
-  }
-
-  private flushSync(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-    this.flush();
-  }
-
-  private hookExit(): void {
-    if (this.exitHooked) return;
-    this.exitHooked = true;
-    process.once('exit', () => this.flushSync());
-    process.once('SIGINT', () => {
-      this.flushSync();
-      process.exit(0);
-    });
-    process.once('SIGTERM', () => {
-      this.flushSync();
-      process.exit(0);
-    });
+  async exec(sql: string): Promise<void> {
+    await pool.query(sql);
   }
 }
 
 export const db = new Db();
 
-/** Load the WASM engine and the on-disk image (if any). Call once before runMigrations(). */
 export async function initDb(): Promise<void> {
-  ensureDataDir();
-  const SQL = await initSqlJs({ locateFile: (file) => wasmPath(file) });
-  const database = fs.existsSync(DB_PATH)
-    ? new SQL.Database(fs.readFileSync(DB_PATH))
-    : new SQL.Database();
-  db.attach(database);
+  await pool.query('SELECT 1');
+  console.log('[db] PostgreSQL connected');
 }
 
-/**
- * Migrations are versioned, append-only.
- * Each session adds new migrations here. Never edit a migration after it has run in production.
- */
 const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
   {
     version: 1,
@@ -250,7 +108,7 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE TABLE IF NOT EXISTS _migrations (
         version INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
-        applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `,
   },
@@ -264,8 +122,8 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         display_name TEXT NOT NULL,
         plan_tier TEXT NOT NULL DEFAULT 'spark',
         ai_tokens_used_this_month INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `,
@@ -274,11 +132,11 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     version: 3,
     name: 'seed_demo_user',
     sql: `
-      INSERT OR IGNORE INTO users (id, email, display_name, plan_tier)
-      VALUES ('demo-user', 'demo@propelstack.ai', 'Demo User', 'spark');
+      INSERT INTO users (id, email, display_name, plan_tier)
+      VALUES ('demo-user', 'demo@propelstack.ai', 'Demo User', 'spark')
+      ON CONFLICT DO NOTHING;
     `,
   },
-  // ---- Session 2: Personal CRM ----
   {
     version: 4,
     name: 'contacts',
@@ -290,22 +148,22 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         last_name TEXT NOT NULL DEFAULT '',
         company TEXT NOT NULL DEFAULT '',
         title TEXT NOT NULL DEFAULT '',
-        phones TEXT NOT NULL DEFAULT '[]',       -- JSON array of { label, value }
-        emails TEXT NOT NULL DEFAULT '[]',       -- JSON array of { label, value }
+        phones TEXT NOT NULL DEFAULT '[]',
+        emails TEXT NOT NULL DEFAULT '[]',
         address TEXT NOT NULL DEFAULT '',
         website TEXT NOT NULL DEFAULT '',
         notes TEXT NOT NULL DEFAULT '',
         category TEXT NOT NULL DEFAULT 'Personal',
-        contact_type TEXT NOT NULL DEFAULT 'personal',  -- 'personal' | 'service'
-        tags TEXT NOT NULL DEFAULT '[]',         -- JSON array of strings
-        birthday TEXT,                           -- ISO date (YYYY-MM-DD) or NULL
-        last_contact TEXT,                       -- ISO date or NULL
-        next_follow_up TEXT,                     -- ISO date or NULL
-        relationship_score INTEGER NOT NULL DEFAULT 3,  -- 1..5
+        contact_type TEXT NOT NULL DEFAULT 'personal',
+        tags TEXT NOT NULL DEFAULT '[]',
+        birthday TEXT,
+        last_contact TEXT,
+        next_follow_up TEXT,
+        relationship_score INTEGER NOT NULL DEFAULT 3,
         how_met TEXT NOT NULL DEFAULT '',
-        photo TEXT NOT NULL DEFAULT '',          -- base64 data URL or remote URL
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        photo TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_contacts_user ON contacts(user_id);
@@ -321,18 +179,17 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         contact_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'note',       -- call | email | meeting | note | other
-        occurred_at TEXT NOT NULL,               -- ISO date
+        type TEXT NOT NULL DEFAULT 'note',
+        occurred_at TEXT NOT NULL,
         notes TEXT NOT NULL DEFAULT '',
         outcome TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_interactions_contact ON contact_interactions(contact_id);
     `,
   },
-  // ---- Session 3: Financial Hub ----
   {
     version: 6,
     name: 'financial_disclaimer_acknowledgments',
@@ -341,7 +198,7 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         version TEXT NOT NULL,
-        acknowledged_at TEXT NOT NULL DEFAULT (datetime('now')),
+        acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         signature_name TEXT NOT NULL,
         ip_address TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -357,9 +214,9 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'expense',   -- 'income' | 'expense'
+        type TEXT NOT NULL DEFAULT 'expense',
         monthly_budget REAL NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_budget_cat_user ON budget_categories(user_id);
@@ -373,11 +230,11 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         category_id TEXT,
-        type TEXT NOT NULL DEFAULT 'expense',   -- 'income' | 'expense'
+        type TEXT NOT NULL DEFAULT 'expense',
         amount REAL NOT NULL DEFAULT 0,
         description TEXT NOT NULL DEFAULT '',
-        occurred_at TEXT NOT NULL,              -- ISO date
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        occurred_at TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_tx_user ON transactions(user_id, occurred_at);
@@ -392,10 +249,10 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
         amount REAL NOT NULL DEFAULT 0,
-        due_date TEXT NOT NULL,                 -- ISO date
-        recurrence TEXT NOT NULL DEFAULT 'none',-- none | weekly | monthly | yearly
+        due_date TEXT NOT NULL,
+        recurrence TEXT NOT NULL DEFAULT 'none',
         is_paid INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_bills_user ON bills(user_id, due_date);
@@ -409,11 +266,11 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
-        kind TEXT NOT NULL DEFAULT 'custom',    -- emergency_fund | home | retirement | custom
+        kind TEXT NOT NULL DEFAULT 'custom',
         target_amount REAL NOT NULL DEFAULT 0,
         current_amount REAL NOT NULL DEFAULT 0,
-        target_date TEXT,                       -- ISO date or NULL
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        target_date TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_goals_user ON financial_goals(user_id);
@@ -426,11 +283,11 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE TABLE IF NOT EXISTS net_worth_snapshots (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
-        snapshot_date TEXT NOT NULL,            -- ISO date
-        assets TEXT NOT NULL DEFAULT '[]',      -- JSON array of { label, value }
-        liabilities TEXT NOT NULL DEFAULT '[]', -- JSON array of { label, value }
+        snapshot_date TEXT NOT NULL,
+        assets TEXT NOT NULL DEFAULT '[]',
+        liabilities TEXT NOT NULL DEFAULT '[]',
         net_worth REAL NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_nw_user ON net_worth_snapshots(user_id, snapshot_date);
@@ -446,16 +303,15 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         name TEXT NOT NULL,
         symbol TEXT NOT NULL DEFAULT '',
         shares REAL NOT NULL DEFAULT 0,
-        cost_basis REAL NOT NULL DEFAULT 0,     -- total cost
-        current_value REAL NOT NULL DEFAULT 0,  -- total current value
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        cost_basis REAL NOT NULL DEFAULT 0,
+        current_value REAL NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_investments_user ON investments(user_id);
     `,
   },
-  // ---- Session 4: AI Assistant ----
   {
     version: 13,
     name: 'ai_conversations',
@@ -466,8 +322,8 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         title TEXT NOT NULL DEFAULT 'New conversation',
         model TEXT NOT NULL DEFAULT 'gpt-mini',
         mode TEXT NOT NULL DEFAULT 'general',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_ai_conv_user ON ai_conversations(user_id, updated_at);
@@ -481,20 +337,19 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         conversation_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        role TEXT NOT NULL,                     -- 'user' | 'assistant'
+        role TEXT NOT NULL,
         content TEXT NOT NULL DEFAULT '',
         tokens_in INTEGER NOT NULL DEFAULT 0,
         tokens_out INTEGER NOT NULL DEFAULT 0,
         model TEXT NOT NULL DEFAULT '',
-        rating INTEGER NOT NULL DEFAULT 0,      -- -1 | 0 | 1
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        rating INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_ai_msg_conv ON ai_messages(conversation_id, created_at);
     `,
   },
-  // ---- Session 5: Dashboard ----
   {
     version: 15,
     name: 'tasks',
@@ -504,9 +359,9 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         user_id TEXT NOT NULL,
         title TEXT NOT NULL,
         notes TEXT NOT NULL DEFAULT '',
-        due_date TEXT,                          -- ISO date or NULL
-        completed_at TEXT,                      -- ISO timestamp or NULL
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        due_date TEXT,
+        completed_at TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id, due_date);
@@ -520,7 +375,7 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
@@ -534,8 +389,8 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         id TEXT PRIMARY KEY,
         habit_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        completed_on TEXT NOT NULL,             -- ISO date (YYYY-MM-DD)
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        completed_on TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (habit_id, completed_on),
         FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -552,7 +407,7 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         user_id TEXT NOT NULL,
         title TEXT NOT NULL DEFAULT '',
         body TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id, created_at);
@@ -565,17 +420,14 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE TABLE IF NOT EXISTS activity_log (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
-        kind TEXT NOT NULL,                     -- task | note | contact | expense | habit
+        kind TEXT NOT NULL,
         summary TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id, created_at);
     `,
   },
-  // ---- Session 7: Document Vault ----
-  // Local fallback: files are stored as base64 in `data` until Session 8 moves them to
-  // Supabase Storage. Uploads are size-capped in the route to keep the sql.js image small.
   {
     version: 20,
     name: 'documents',
@@ -586,13 +438,13 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         title TEXT NOT NULL,
         category TEXT NOT NULL DEFAULT 'Other',
         file_name TEXT NOT NULL DEFAULT '',
-        file_type TEXT NOT NULL DEFAULT '',     -- MIME type
-        file_size INTEGER NOT NULL DEFAULT 0,    -- raw bytes
-        data TEXT NOT NULL DEFAULT '',           -- base64 (local fallback; -> Supabase in Session 8)
-        expiry_date TEXT,                        -- ISO date or NULL
-        tags TEXT NOT NULL DEFAULT '[]',         -- JSON array of strings
+        file_type TEXT NOT NULL DEFAULT '',
+        file_size INTEGER NOT NULL DEFAULT 0,
+        data TEXT NOT NULL DEFAULT '',
+        expiry_date TEXT,
+        tags TEXT NOT NULL DEFAULT '[]',
         ai_summary TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
       CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id, category);
@@ -606,8 +458,8 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
         token TEXT PRIMARY KEY,
         document_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        expires_at TEXT NOT NULL,                -- ISO timestamp
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
       );
       CREATE INDEX IF NOT EXISTS idx_doc_shares_doc ON document_shares(document_id);
@@ -615,37 +467,37 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
   },
 ];
 
-export function runMigrations(): void {
-  // Performance + safety pragmas (WAL/synchronous are no-ops under sql.js).
-  db.pragma('foreign_keys = ON');
+export async function runMigrations(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS _migrations (
+      version INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
-  // Bootstrap the meta table first
-  db.exec(MIGRATIONS[0].sql);
-
-  const appliedRow = db.prepare('SELECT MAX(version) as v FROM _migrations').get() as { v: number | null } | undefined;
-  const applied = appliedRow?.v ?? 0;
-
+  const { rows } = await pool.query('SELECT MAX(version) AS v FROM _migrations');
+  const applied = Number(rows[0]?.v ?? 0);
   const pending = MIGRATIONS.filter((m) => m.version > applied);
   if (pending.length === 0) return;
 
-  const insertMigration = db.prepare('INSERT INTO _migrations (version, name) VALUES (?, ?)');
-
   for (const migration of pending) {
-    const tx = db.transaction(() => {
-      db.exec(migration.sql);
-      insertMigration.run(migration.version, migration.name);
-    });
-    tx();
-    // eslint-disable-next-line no-console
-    console.log(`[db] applied migration ${migration.version}: ${migration.name}`);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(migration.sql);
+      await client.query('INSERT INTO _migrations (version, name) VALUES ($1, $2)', [migration.version, migration.name]);
+      await client.query('COMMIT');
+      console.log(`[db] applied migration ${migration.version}: ${migration.name}`);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 }
 
-/**
- * Helper for routes: get current user.
- * Auth is stubbed for now (always returns the seeded demo user).
- * Session 8 / a future auth session will replace this with real session/JWT lookup.
- */
 export function getCurrentUserId(): string {
   return 'demo-user';
 }

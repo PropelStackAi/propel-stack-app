@@ -12,21 +12,18 @@ import {
   type ContactInput,
 } from '../lib/contacts.js';
 
-/**
- * Personal CRM API (Session 2).
- * HARD RULE #5: SQLite is synchronous -- .get()/.all()/.run(), never await.
- */
+/** Personal CRM API (Session 2). */
 export const contactsRouter = Router();
 
 // ---- prepared-statement helpers ----
 
-function selectContact(id: string, userId: string) {
+async function selectContact(id: string, userId: string) {
   return db
     .prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?')
     .get(id, userId) as Record<string, unknown> | undefined;
 }
 
-function persistContact(id: string, userId: string, input: ContactInput, isInsert: boolean): void {
+async function persistContact(id: string, userId: string, input: ContactInput, isInsert: boolean): Promise<void> {
   const cols = {
     first_name: input.firstName,
     last_name: input.lastName,
@@ -49,7 +46,7 @@ function persistContact(id: string, userId: string, input: ContactInput, isInser
   };
 
   if (isInsert) {
-    db.prepare(
+    await db.prepare(
       `INSERT INTO contacts
         (id, user_id, first_name, last_name, company, title, phones, emails, address, website,
          notes, category, contact_type, tags, birthday, last_contact, next_follow_up,
@@ -60,14 +57,14 @@ function persistContact(id: string, userId: string, input: ContactInput, isInser
          @relationship_score, @how_met, @photo)`,
     ).run({ id, user_id: userId, ...cols });
   } else {
-    db.prepare(
+    await db.prepare(
       `UPDATE contacts SET
          first_name=@first_name, last_name=@last_name, company=@company, title=@title,
          phones=@phones, emails=@emails, address=@address, website=@website, notes=@notes,
          category=@category, contact_type=@contact_type, tags=@tags, birthday=@birthday,
          last_contact=@last_contact, next_follow_up=@next_follow_up,
          relationship_score=@relationship_score, how_met=@how_met, photo=@photo,
-         updated_at=datetime('now')
+         updated_at=NOW()
        WHERE id=@id AND user_id=@user_id`,
     ).run({ id, user_id: userId, ...cols });
   }
@@ -79,49 +76,49 @@ function badRequest(res: Response, message: string, details?: unknown) {
 
 // ---- collection ----
 
-contactsRouter.get('/', (_req: Request, res: Response) => {
+contactsRouter.get('/', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const rows = db
-    .prepare('SELECT * FROM contacts WHERE user_id = ? ORDER BY first_name COLLATE NOCASE, last_name COLLATE NOCASE')
-    .all(userId) as Record<string, unknown>[];
+  const rows = await db
+    .prepare('SELECT * FROM contacts WHERE user_id = ? ORDER BY LOWER(first_name), LOWER(last_name)')
+    .all(userId);
   res.json(rows.map((r) => rowToContact(r as never)));
 });
 
-contactsRouter.post('/', (req: Request, res: Response) => {
+contactsRouter.post('/', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = contactInputSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, 'Invalid contact', parsed.error.flatten());
   if (!hasIdentity(parsed.data)) return badRequest(res, 'A contact needs a first name, last name, or company.');
 
   const id = newId();
-  persistContact(id, userId, parsed.data, true);
-  const row = selectContact(id, userId);
+  await persistContact(id, userId, parsed.data, true);
+  const row = await selectContact(id, userId);
   res.status(201).json(rowToContact(row as never));
 });
 
 // ---- derived / meta (must precede /:id) ----
 
-contactsRouter.get('/meta/follow-ups', (_req: Request, res: Response) => {
+contactsRouter.get('/meta/follow-ups', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const today = new Date().toISOString().slice(0, 10);
-  const rows = db
+  const rows = await db
     .prepare(
       `SELECT * FROM contacts
        WHERE user_id = ? AND next_follow_up IS NOT NULL AND next_follow_up != ''
          AND next_follow_up <= ?
        ORDER BY next_follow_up ASC`,
     )
-    .all(userId, today) as Record<string, unknown>[];
+    .all(userId, today);
   res.json(rows.map((r) => rowToContact(r as never)));
 });
 
-contactsRouter.get('/meta/birthdays', (_req: Request, res: Response) => {
+contactsRouter.get('/meta/birthdays', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const rows = db
+  const rows = await db
     .prepare(
       `SELECT * FROM contacts WHERE user_id = ? AND birthday IS NOT NULL AND birthday != ''`,
     )
-    .all(userId) as Record<string, unknown>[];
+    .all(userId);
 
   const now = new Date();
   const upcoming = rows
@@ -162,7 +159,7 @@ contactsRouter.post('/suggest-category', (req: Request, res: Response) => {
   res.json(suggestCategory(title, company));
 });
 
-contactsRouter.post('/import', (req: Request, res: Response) => {
+contactsRouter.post('/import', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const items = Array.isArray(req.body?.contacts) ? req.body.contacts : null;
   if (!items) return badRequest(res, 'Expected { contacts: [...] }.');
@@ -171,32 +168,29 @@ contactsRouter.post('/import', (req: Request, res: Response) => {
   let imported = 0;
   const errors: Array<{ index: number; error: string }> = [];
 
-  const tx = db.transaction(() => {
-    items.forEach((item: unknown, index: number) => {
-      const parsed = contactInputSchema.safeParse(item);
-      if (!parsed.success || !hasIdentity(parsed.data)) {
-        errors.push({ index, error: 'Invalid or empty row' });
-        return;
-      }
-      persistContact(newId(), userId, parsed.data, true);
-      imported += 1;
-    });
-  });
-  tx();
+  for (let index = 0; index < items.length; index++) {
+    const parsed = contactInputSchema.safeParse(items[index]);
+    if (!parsed.success || !hasIdentity(parsed.data)) {
+      errors.push({ index, error: 'Invalid or empty row' });
+      continue;
+    }
+    await persistContact(newId(), userId, parsed.data, true);
+    imported += 1;
+  }
 
   res.json({ imported, skipped: errors.length, errors });
 });
 
 // ---- single resource ----
 
-contactsRouter.get('/:id', (req: Request, res: Response) => {
+contactsRouter.get('/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const row = selectContact((req.params.id as string), userId);
+  const row = await selectContact(req.params.id as string, userId);
   if (!row) return res.status(404).json({ error: 'Contact not found' });
 
-  const interactions = db
+  const interactions = await db
     .prepare('SELECT * FROM contact_interactions WHERE contact_id = ? AND user_id = ? ORDER BY occurred_at DESC')
-    .all((req.params.id as string), userId) as Record<string, unknown>[];
+    .all(req.params.id as string, userId);
 
   res.json({
     ...rowToContact(row as never),
@@ -204,53 +198,53 @@ contactsRouter.get('/:id', (req: Request, res: Response) => {
   });
 });
 
-contactsRouter.patch('/:id', (req: Request, res: Response) => {
+contactsRouter.patch('/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  if (!selectContact((req.params.id as string), userId)) return res.status(404).json({ error: 'Contact not found' });
+  if (!await selectContact(req.params.id as string, userId)) return res.status(404).json({ error: 'Contact not found' });
 
   const parsed = contactInputSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, 'Invalid contact', parsed.error.flatten());
   if (!hasIdentity(parsed.data)) return badRequest(res, 'A contact needs a first name, last name, or company.');
 
-  persistContact((req.params.id as string), userId, parsed.data, false);
-  res.json(rowToContact(selectContact((req.params.id as string), userId) as never));
+  await persistContact(req.params.id as string, userId, parsed.data, false);
+  res.json(rowToContact(await selectContact(req.params.id as string, userId) as never));
 });
 
-contactsRouter.delete('/:id', (req: Request, res: Response) => {
+contactsRouter.delete('/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const result = db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run((req.params.id as string), userId);
+  const result = await db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(req.params.id as string, userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Contact not found' });
   res.status(204).end();
 });
 
 // ---- interactions ----
 
-contactsRouter.post('/:id/interactions', (req: Request, res: Response) => {
+contactsRouter.post('/:id/interactions', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  if (!selectContact((req.params.id as string), userId)) return res.status(404).json({ error: 'Contact not found' });
+  if (!await selectContact(req.params.id as string, userId)) return res.status(404).json({ error: 'Contact not found' });
 
   const parsed = interactionInputSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, 'Invalid interaction', parsed.error.flatten());
 
   const id = newId();
-  db.prepare(
+  await db.prepare(
     `INSERT INTO contact_interactions (id, contact_id, user_id, type, occurred_at, notes, outcome)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  ).run(id, (req.params.id as string), userId, parsed.data.type, parsed.data.occurredAt, parsed.data.notes, parsed.data.outcome);
+  ).run(id, req.params.id as string, userId, parsed.data.type, parsed.data.occurredAt, parsed.data.notes, parsed.data.outcome);
 
   // Logging an interaction also advances the contact's lastContact date.
-  db.prepare("UPDATE contacts SET last_contact = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
-    .run(parsed.data.occurredAt, (req.params.id as string), userId);
+  await db.prepare('UPDATE contacts SET last_contact = ?, updated_at = NOW() WHERE id = ? AND user_id = ?')
+    .run(parsed.data.occurredAt, req.params.id as string, userId);
 
-  const row = db.prepare('SELECT * FROM contact_interactions WHERE id = ?').get(id) as Record<string, unknown>;
+  const row = await db.prepare('SELECT * FROM contact_interactions WHERE id = ?').get(id);
   res.status(201).json(rowToInteraction(row as never));
 });
 
-contactsRouter.delete('/:id/interactions/:interactionId', (req: Request, res: Response) => {
+contactsRouter.delete('/:id/interactions/:interactionId', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const result = db
+  const result = await db
     .prepare('DELETE FROM contact_interactions WHERE id = ? AND contact_id = ? AND user_id = ?')
-    .run((req.params.interactionId as string), (req.params.id as string), userId);
+    .run(req.params.interactionId as string, req.params.id as string, userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Interaction not found' });
   res.status(204).end();
 });

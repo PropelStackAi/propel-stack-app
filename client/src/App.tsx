@@ -12,6 +12,17 @@ import { KidsZone } from './pages/KidsZone';
 import { SpecialNeedsHub } from './pages/SpecialNeedsHub';
 import { AthleteHub } from './pages/AthleteHub';
 import { EmergencyMode } from './pages/EmergencyMode';
+import { StudentMode } from './pages/StudentMode';
+import { BusinessHub } from './pages/BusinessHub';
+import { FamilyHub } from './pages/FamilyHub';
+import { SmartKitchen } from './pages/SmartKitchen';
+import { InboxIntelligence } from './pages/InboxIntelligence';
+import { SituationAwareness } from './pages/SituationAwareness';
+import { LifeEvents } from './pages/LifeEvents';
+import { TravelMode } from './pages/TravelMode';
+import { FamilyNetwork } from './pages/FamilyNetwork';
+import { AppIntegrations } from './pages/AppIntegrations';
+import { ProfileSelect } from './pages/ProfileSelect';
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -42,6 +53,17 @@ export function App() {
               <Route path="/kids" component={KidsZone} />
               <Route path="/special-needs" component={SpecialNeedsHub} />
               <Route path="/athlete" component={AthleteHub} />
+              <Route path="/student" component={StudentMode} />
+              <Route path="/business" component={BusinessHub} />
+              <Route path="/family" component={FamilyHub} />
+              <Route path="/kitchen" component={SmartKitchen} />
+              <Route path="/inbox" component={InboxIntelligence} />
+              <Route path="/awareness" component={SituationAwareness} />
+              <Route path="/life-events" component={LifeEvents} />
+              <Route path="/travel" component={TravelMode} />
+              <Route path="/network" component={FamilyNetwork} />
+              <Route path="/apps" component={AppIntegrations} />
+              <Route path="/profiles" component={ProfileSelect} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

@@ -22,7 +22,7 @@ import {
 } from '../lib/financial.js';
 
 /**
- * Financial Command Center API (Session 3). Synchronous sql.js access (HARD RULE #5).
+ * Financial Command Center API (Session 3).
  * The disclaimer gate (below) must be acknowledged before the client renders any feature.
  */
 export const financialRouter = Router();
@@ -37,9 +37,9 @@ function clientIp(req: Request): string {
 
 // ---- Disclaimer gate ----
 
-financialRouter.get('/disclaimer', (_req: Request, res: Response) => {
+financialRouter.get('/disclaimer', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const row = db
+  const row = await db
     .prepare(
       `SELECT version, acknowledged_at, signature_name
        FROM financial_disclaimer_acknowledgments
@@ -58,13 +58,13 @@ financialRouter.get('/disclaimer', (_req: Request, res: Response) => {
   });
 });
 
-financialRouter.post('/disclaimer', (req: Request, res: Response) => {
+financialRouter.post('/disclaimer', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = ackInputSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'A typed full-name signature is required.' });
   }
-  db.prepare(
+  await db.prepare(
     `INSERT INTO financial_disclaimer_acknowledgments
        (id, user_id, version, signature_name, ip_address)
      VALUES (?, ?, ?, ?, ?)`,
@@ -164,22 +164,22 @@ financialRouter.use(
 
 // ---- Net worth snapshots (JSON columns + computed net worth) ----
 
-financialRouter.get('/net-worth', (_req: Request, res: Response) => {
+financialRouter.get('/net-worth', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const rows = db
+  const rows = await db
     .prepare('SELECT * FROM net_worth_snapshots WHERE user_id = ? ORDER BY snapshot_date ASC')
-    .all(userId) as Record<string, unknown>[];
+    .all(userId);
   res.json(rows.map(rowToSnapshot));
 });
 
-financialRouter.post('/net-worth', (req: Request, res: Response) => {
+financialRouter.post('/net-worth', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = netWorthSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Invalid snapshot', details: parsed.error.flatten() });
 
   const id = newId();
   const netWorth = computeNetWorth(parsed.data.assets, parsed.data.liabilities);
-  db.prepare(
+  await db.prepare(
     `INSERT INTO net_worth_snapshots (id, user_id, snapshot_date, assets, liabilities, net_worth)
      VALUES (?, ?, ?, ?, ?, ?)`,
   ).run(
@@ -190,13 +190,13 @@ financialRouter.post('/net-worth', (req: Request, res: Response) => {
     JSON.stringify(parsed.data.liabilities),
     netWorth,
   );
-  const row = db.prepare('SELECT * FROM net_worth_snapshots WHERE id = ?').get(id) as Record<string, unknown>;
-  res.status(201).json(rowToSnapshot(row));
+  const row = await db.prepare('SELECT * FROM net_worth_snapshots WHERE id = ?').get(id);
+  res.status(201).json(rowToSnapshot(row as Record<string, unknown>));
 });
 
-financialRouter.delete('/net-worth/:id', (req: Request, res: Response) => {
+financialRouter.delete('/net-worth/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const result = db
+  const result = await db
     .prepare('DELETE FROM net_worth_snapshots WHERE id = ? AND user_id = ?')
     .run(req.params.id as string, userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Not found' });

@@ -146,7 +146,11 @@ export function PersonalCRM() {
   );
 }
 
-function EmptyList({ onAdd }: { onAdd: () => void }) {
+interface EmptyListProps {
+  onAdd: () => void;
+}
+
+function EmptyList({ onAdd }: EmptyListProps): JSX.Element {
   return (
     <div className="text-center p-6">
       <p className="text-sm text-surface-muted">No contacts yet.</p>
@@ -157,7 +161,11 @@ function EmptyList({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function EmptyDetail({ hasContacts }: { hasContacts: boolean }) {
+interface EmptyDetailProps {
+  hasContacts: boolean;
+}
+
+function EmptyDetail({ hasContacts }: EmptyDetailProps): JSX.Element {
   return (
     <div className="card grid place-items-center text-center min-h-[16rem]">
       <div>

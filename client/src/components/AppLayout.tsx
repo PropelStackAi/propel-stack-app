@@ -22,6 +22,8 @@ const NAV: NavItem[] = [
   { href: '/special-needs',label: 'Family Support',  short: 'SNFS',     accent: 'purple' },
   { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple' },
   { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal'   },
+  { href: '/student',      label: 'Student Mode',    short: 'Student',  accent: 'coral'  },
+  { href: '/business',     label: 'Business Hub',    short: 'Business', accent: 'teal'   },
 ];
 
 interface User {

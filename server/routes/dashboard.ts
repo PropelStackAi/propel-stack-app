@@ -14,23 +14,23 @@ import {
   weekStartIso,
 } from '../lib/dashboard.js';
 
-/** Dashboard aggregation + quick capture (Session 5). Synchronous sql.js access. */
+/** Dashboard aggregation + quick capture (Session 5). */
 export const dashboardRouter = Router();
 
 // tasks / habits / notes live under the same /api/dashboard prefix
 dashboardRouter.use('/', productivityRouter);
 
 // ---- Stats summary ----
-dashboardRouter.get('/summary', (_req: Request, res: Response) => {
+dashboardRouter.get('/summary', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const tasksDone = db
+  const tasksDone = await db
     .prepare("SELECT COUNT(*) AS c FROM tasks WHERE user_id = ? AND completed_at IS NOT NULL AND substr(completed_at,1,10) >= ?")
     .get(userId, weekStartIso()) as { c: number };
-  const nw = db
+  const nw = await db
     .prepare('SELECT net_worth FROM net_worth_snapshots WHERE user_id = ? ORDER BY snapshot_date DESC LIMIT 1')
     .get(userId) as { net_worth: number } | undefined;
-  const user = db.prepare('SELECT ai_tokens_used_this_month FROM users WHERE id = ?').get(userId) as { ai_tokens_used_this_month: number } | undefined;
-  const contacts = db
+  const user = await db.prepare('SELECT ai_tokens_used_this_month FROM users WHERE id = ?').get(userId) as { ai_tokens_used_this_month: number } | undefined;
+  const contacts = await db
     .prepare('SELECT COUNT(*) AS c FROM contacts WHERE user_id = ? AND substr(created_at,1,10) >= ?')
     .get(userId, monthStartIso()) as { c: number };
 
@@ -43,22 +43,22 @@ dashboardRouter.get('/summary', (_req: Request, res: Response) => {
 });
 
 // ---- Today's agenda (tasks + bills due today or overdue) ----
-dashboardRouter.get('/agenda', (_req: Request, res: Response) => {
+dashboardRouter.get('/agenda', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const today = todayIso();
-  const tasks = db
+  const tasks = await db
     .prepare("SELECT * FROM tasks WHERE user_id = ? AND completed_at IS NULL AND due_date IS NOT NULL AND due_date <= ? ORDER BY due_date ASC")
-    .all(userId, today) as Record<string, unknown>[];
-  const bills = db
+    .all(userId, today);
+  const bills = await db
     .prepare('SELECT * FROM bills WHERE user_id = ? AND is_paid = 0 AND due_date <= ? ORDER BY due_date ASC')
-    .all(userId, today) as Record<string, unknown>[];
+    .all(userId, today);
   res.json({ tasks: tasks.map(rowToTask), bills: bills.map(rowToBill) });
 });
 
 // ---- Recent activity ----
-dashboardRouter.get('/activity', (_req: Request, res: Response) => {
+dashboardRouter.get('/activity', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const rows = db.prepare('SELECT * FROM activity_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 10').all(userId) as Record<string, unknown>[];
+  const rows = await db.prepare('SELECT * FROM activity_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 10').all(userId);
   res.json(rows.map(rowToActivity));
 });
 
@@ -88,12 +88,12 @@ dashboardRouter.get('/weather', async (req: Request, res: Response) => {
 });
 
 // ---- AI morning brief ----
-dashboardRouter.get('/brief', (_req: Request, res: Response) => {
+dashboardRouter.get('/brief', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const today = todayIso();
-  const dueTasks = (db.prepare("SELECT COUNT(*) AS c FROM tasks WHERE user_id=? AND completed_at IS NULL AND due_date IS NOT NULL AND due_date <= ?").get(userId, today) as { c: number }).c;
-  const dueBills = (db.prepare('SELECT COUNT(*) AS c FROM bills WHERE user_id=? AND is_paid=0 AND due_date <= ?').get(userId, today) as { c: number }).c;
-  const overdueFollowUps = (db.prepare("SELECT COUNT(*) AS c FROM contacts WHERE user_id=? AND next_follow_up IS NOT NULL AND next_follow_up != '' AND next_follow_up <= ?").get(userId, today) as { c: number }).c;
+  const dueTasks = ((await db.prepare("SELECT COUNT(*) AS c FROM tasks WHERE user_id=? AND completed_at IS NULL AND due_date IS NOT NULL AND due_date <= ?").get(userId, today)) as { c: number }).c;
+  const dueBills = ((await db.prepare('SELECT COUNT(*) AS c FROM bills WHERE user_id=? AND is_paid=0 AND due_date <= ?').get(userId, today)) as { c: number }).c;
+  const overdueFollowUps = ((await db.prepare("SELECT COUNT(*) AS c FROM contacts WHERE user_id=? AND next_follow_up IS NOT NULL AND next_follow_up != '' AND next_follow_up <= ?").get(userId, today)) as { c: number }).c;
 
   const prompt = `Write a friendly good-morning brief in at most 4 sentences. Today is ${today}. The user has ${dueTasks} task(s) due, ${dueBills} bill(s) due, and ${overdueFollowUps} overdue contact follow-up(s). Be encouraging and concise.`;
   const result = complete({ prompt, mode: 'general' });
@@ -101,23 +101,23 @@ dashboardRouter.get('/brief', (_req: Request, res: Response) => {
 });
 
 // ---- Quick capture ----
-dashboardRouter.post('/capture', (req: Request, res: Response) => {
+dashboardRouter.post('/capture', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = captureSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Invalid capture' });
   const { kind, text, amount } = parsed.data;
 
   if (kind === 'task') {
-    db.prepare('INSERT INTO tasks (id, user_id, title) VALUES (?, ?, ?)').run(newId(), userId, text);
+    await db.prepare('INSERT INTO tasks (id, user_id, title) VALUES (?, ?, ?)').run(newId(), userId, text);
   } else if (kind === 'note') {
-    db.prepare('INSERT INTO notes (id, user_id, body) VALUES (?, ?, ?)').run(newId(), userId, text);
+    await db.prepare('INSERT INTO notes (id, user_id, body) VALUES (?, ?, ?)').run(newId(), userId, text);
   } else if (kind === 'contact') {
-    db.prepare("INSERT INTO contacts (id, user_id, first_name, category, contact_type) VALUES (?, ?, ?, 'Personal', 'personal')").run(newId(), userId, text);
+    await db.prepare("INSERT INTO contacts (id, user_id, first_name, category, contact_type) VALUES (?, ?, ?, 'Personal', 'personal')").run(newId(), userId, text);
   } else {
-    db.prepare("INSERT INTO transactions (id, user_id, type, amount, description, occurred_at) VALUES (?, ?, 'expense', ?, ?, ?)").run(
+    await db.prepare("INSERT INTO transactions (id, user_id, type, amount, description, occurred_at) VALUES (?, ?, 'expense', ?, ?, ?)").run(
       newId(), userId, Number(amount) || 0, text, todayIso(),
     );
   }
-  logActivity(userId, kind, `Quick capture (${kind}): ${text.slice(0, 60)}`);
+  logActivity(userId, kind, `Quick capture (${kind}): ${text.slice(0, 60)}`).catch(() => {});
   res.status(201).json({ ok: true, kind });
 });

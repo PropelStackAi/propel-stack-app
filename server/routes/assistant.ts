@@ -19,15 +19,12 @@ import {
   type Mode,
 } from '../lib/assistant.js';
 
-/**
- * AI Assistant API (Session 4). Synchronous sql.js access (HARD RULE #5).
- * Responses stream over SSE (token by token); everything else is plain JSON.
- */
+/** AI Assistant API (Session 4). Responses stream over SSE; everything else is plain JSON. */
 export const assistantRouter = Router();
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-function getConversation(id: string, userId: string) {
+async function getConversation(id: string, userId: string) {
   return db.prepare('SELECT * FROM ai_conversations WHERE id = ? AND user_id = ?').get(id, userId) as
     | Record<string, unknown>
     | undefined;
@@ -39,43 +36,43 @@ assistantRouter.get('/usage', (_req: Request, res: Response) => {
 });
 
 // ---- Conversations ----
-assistantRouter.get('/conversations', (_req: Request, res: Response) => {
+assistantRouter.get('/conversations', async (_req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const rows = db
+  const rows = await db
     .prepare('SELECT * FROM ai_conversations WHERE user_id = ? ORDER BY updated_at DESC')
-    .all(userId) as Record<string, unknown>[];
+    .all(userId);
   res.json(rows.map(rowToConversation));
 });
 
-assistantRouter.post('/conversations', (req: Request, res: Response) => {
+assistantRouter.post('/conversations', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = conversationSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: 'Invalid conversation' });
   const id = newId();
-  db.prepare(
+  await db.prepare(
     'INSERT INTO ai_conversations (id, user_id, title, model, mode) VALUES (?, ?, ?, ?, ?)',
   ).run(id, userId, parsed.data.title || 'New conversation', parsed.data.model, parsed.data.mode);
-  res.status(201).json(rowToConversation(getConversation(id, userId) as Record<string, unknown>));
+  res.status(201).json(rowToConversation(await getConversation(id, userId) as Record<string, unknown>));
 });
 
-assistantRouter.get('/conversations/:id', (req: Request, res: Response) => {
+assistantRouter.get('/conversations/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const conv = getConversation(req.params.id as string, userId);
+  const conv = await getConversation(req.params.id as string, userId);
   if (!conv) return res.status(404).json({ error: 'Not found' });
-  const messages = db
+  const messages = await db
     .prepare('SELECT * FROM ai_messages WHERE conversation_id = ? ORDER BY created_at ASC')
-    .all(req.params.id as string) as Record<string, unknown>[];
+    .all(req.params.id as string);
   res.json({ ...rowToConversation(conv), messages: messages.map(rowToMessage) });
 });
 
-assistantRouter.patch('/conversations/:id', (req: Request, res: Response) => {
+assistantRouter.patch('/conversations/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const conv = getConversation(req.params.id as string, userId);
+  const conv = await getConversation(req.params.id as string, userId);
   if (!conv) return res.status(404).json({ error: 'Not found' });
   const parsed = conversationSchema.partial().safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: 'Invalid update' });
-  db.prepare(
-    "UPDATE ai_conversations SET title = ?, model = ?, mode = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?",
+  await db.prepare(
+    'UPDATE ai_conversations SET title = ?, model = ?, mode = ?, updated_at = NOW() WHERE id = ? AND user_id = ?',
   ).run(
     parsed.data.title ?? (conv.title as string),
     parsed.data.model ?? (conv.model as string),
@@ -83,22 +80,22 @@ assistantRouter.patch('/conversations/:id', (req: Request, res: Response) => {
     req.params.id as string,
     userId,
   );
-  res.json(rowToConversation(getConversation(req.params.id as string, userId) as Record<string, unknown>));
+  res.json(rowToConversation(await getConversation(req.params.id as string, userId) as Record<string, unknown>));
 });
 
-assistantRouter.delete('/conversations/:id', (req: Request, res: Response) => {
+assistantRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
-  const result = db.prepare('DELETE FROM ai_conversations WHERE id = ? AND user_id = ?').run(req.params.id as string, userId);
+  const result = await db.prepare('DELETE FROM ai_conversations WHERE id = ? AND user_id = ?').run(req.params.id as string, userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Not found' });
   res.status(204).end();
 });
 
 // ---- Message rating ----
-assistantRouter.post('/messages/:id/rate', (req: Request, res: Response) => {
+assistantRouter.post('/messages/:id/rate', async (req: Request, res: Response) => {
   const userId = getCurrentUserId();
   const parsed = ratingSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Invalid rating' });
-  const result = db
+  const result = await db
     .prepare('UPDATE ai_messages SET rating = ? WHERE id = ? AND user_id = ?')
     .run(parsed.data.rating, req.params.id as string, userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Not found' });
@@ -117,7 +114,7 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   res.flushHeaders?.();
   const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
-  const conv = conversationId ? getConversation(conversationId, userId) : undefined;
+  const conv = conversationId ? await getConversation(conversationId, userId) : undefined;
   if (!conv) {
     send('error', { error: 'Conversation not found' });
     return res.end();
@@ -132,11 +129,11 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
 
   // Persist the user's message + bump conversation metadata (auto-title on first message).
   const userMsgId = newId();
-  db.prepare('INSERT INTO ai_messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)').run(
+  await db.prepare('INSERT INTO ai_messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)').run(
     userMsgId, conversationId, userId, 'user', message,
   );
   const isFirstTitle = !conv.title || conv.title === 'New conversation';
-  db.prepare("UPDATE ai_conversations SET title = ?, model = ?, mode = ?, updated_at = datetime('now') WHERE id = ?").run(
+  await db.prepare('UPDATE ai_conversations SET title = ?, model = ?, mode = ?, updated_at = NOW() WHERE id = ?').run(
     isFirstTitle ? message.slice(0, 48) : (conv.title as string), model, mode, conversationId,
   );
   send('user', { id: userMsgId });
@@ -172,10 +169,10 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   }
 
   const asstId = newId();
-  db.prepare(
+  await db.prepare(
     'INSERT INTO ai_messages (id, conversation_id, user_id, role, content, tokens_in, tokens_out, model) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   ).run(asstId, conversationId, userId, 'assistant', result.text, result.tokensIn, result.tokensOut, result.model);
-  db.prepare("UPDATE ai_conversations SET updated_at = datetime('now') WHERE id = ?").run(conversationId);
+  await db.prepare('UPDATE ai_conversations SET updated_at = NOW() WHERE id = ?').run(conversationId);
 
   if (!closed) {
     send('done', {

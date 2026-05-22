@@ -62,7 +62,8 @@ export async function apiRequest<T = unknown>(
     init.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
 
-  const res = await fetch(path, init);
+  const base = (import.meta.env as Record<string, string | undefined>).VITE_API_URL ?? '';
+  const res = await fetch(`${base}${path}`, init);
   const parsed = await parseBody(res);
 
   if (!res.ok) {

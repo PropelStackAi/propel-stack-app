@@ -24,8 +24,8 @@ export function monthStartIso(): string {
   return `${new Date().toISOString().slice(0, 7)}-01`;
 }
 
-export function logActivity(userId: string, kind: string, summary: string): void {
-  db.prepare('INSERT INTO activity_log (id, user_id, kind, summary) VALUES (?, ?, ?, ?)').run(
+export async function logActivity(userId: string, kind: string, summary: string): Promise<void> {
+  await db.prepare('INSERT INTO activity_log (id, user_id, kind, summary) VALUES (?, ?, ?, ?)').run(
     newId(), userId, kind, summary,
   );
 }
