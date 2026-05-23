@@ -465,6 +465,105 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_doc_shares_doc ON document_shares(document_id);
     `,
   },
+  // ── Session 10: Health Hub + Emergency Mode ──────────────────────────────
+  {
+    version: 26,
+    name: 'health_profile',
+    sql: `
+      CREATE TABLE IF NOT EXISTS health_profile (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        full_name TEXT NOT NULL DEFAULT '',
+        blood_type TEXT NOT NULL DEFAULT '',
+        allergies TEXT NOT NULL DEFAULT '[]',
+        conditions TEXT NOT NULL DEFAULT '[]',
+        emergency_contact_name TEXT NOT NULL DEFAULT '',
+        emergency_contact_phone TEXT NOT NULL DEFAULT '',
+        emergency_contact_relation TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_health_profile_user ON health_profile(user_id);
+    `,
+  },
+  {
+    version: 27,
+    name: 'health_metrics',
+    sql: `
+      CREATE TABLE IF NOT EXISTS health_metrics (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        metric_type TEXT NOT NULL,
+        value REAL NOT NULL,
+        value2 REAL,
+        unit TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        measured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_health_metrics_user ON health_metrics(user_id, metric_type, measured_at);
+    `,
+  },
+  {
+    version: 28,
+    name: 'symptom_logs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS symptom_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        symptom TEXT NOT NULL,
+        severity INTEGER NOT NULL DEFAULT 5,
+        duration_hours REAL,
+        notes TEXT NOT NULL DEFAULT '',
+        logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_symptom_user ON symptom_logs(user_id, symptom, logged_at);
+    `,
+  },
+  {
+    version: 29,
+    name: 'medication_reminders',
+    sql: `
+      CREATE TABLE IF NOT EXISTS medication_reminders (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        dose TEXT NOT NULL DEFAULT '',
+        frequency TEXT NOT NULL DEFAULT 'daily',
+        reminder_times TEXT NOT NULL DEFAULT '[]',
+        active INTEGER NOT NULL DEFAULT 1,
+        start_date TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_meds_user ON medication_reminders(user_id, active);
+    `,
+  },
+  {
+    version: 30,
+    name: 'health_appointments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS health_appointments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        doctor_name TEXT NOT NULL,
+        specialty TEXT NOT NULL DEFAULT '',
+        appointment_date TEXT NOT NULL,
+        appointment_time TEXT NOT NULL DEFAULT '',
+        location TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'upcoming',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_appts_user ON health_appointments(user_id, appointment_date);
+    `,
+  },
   // ── Session 9: Parental Controls + Kids Zone ─────────────────────────────
   {
     version: 22,

@@ -9,6 +9,7 @@ import { financialRouter } from './routes/financial.js';
 import { assistantRouter } from './routes/assistant.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { documentsRouter } from './routes/documents.js';
+import { healthRouter } from './routes/health.js';
 import { parentalRouter } from './routes/parental.js';
 import { kidsRouter } from './routes/kids.js';
 
@@ -52,6 +53,7 @@ app.use('/api/financial', financialRouter);           // Session 3 -- Financial 
 app.use('/api/assistant', assistantRouter);           // Session 4 -- AI Assistant
 app.use('/api/dashboard', dashboardRouter);           // Session 5 -- Dashboard
 app.use('/api/documents', documentsRouter);           // Session 7 -- Document Vault
+app.use('/api/health', healthRouter);                 // Session 10 -- Health Hub + Emergency Mode
 app.use('/api/parental', parentalRouter);             // Session 9 -- Parental Controls
 app.use('/api/kids', kidsRouter);                     // Session 9 -- Kids Zone
 
