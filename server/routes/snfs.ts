@@ -71,7 +71,7 @@ AREAS OF EXPERTISE (general information only, not clinical guidance):
 
 // ── Disclaimer check middleware ────────────────────────────────────────────
 async function requireDisclaimer(req: Request, res: Response): Promise<boolean> {
-  const userId = await getCurrentUserId(req);
+  const userId = getCurrentUserId();
   const row = await db.prepare(
     'SELECT id FROM snfs_disclaimer_acknowledgments WHERE user_id = ? AND version = ?',
   ).get(userId, DISCLAIMER_VERSION);
@@ -91,7 +91,7 @@ async function requireDisclaimer(req: Request, res: Response): Promise<boolean> 
 /** GET /api/snfs/disclaimer — check acknowledgment status */
 snfsRouter.get('/disclaimer', async (req: Request, res: Response) => {
   try {
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const row = await db.prepare(
       'SELECT acknowledged_at FROM snfs_disclaimer_acknowledgments WHERE user_id = ? AND version = ?',
     ).get(userId, DISCLAIMER_VERSION) as { acknowledged_at: string } | undefined;
@@ -104,7 +104,7 @@ snfsRouter.get('/disclaimer', async (req: Request, res: Response) => {
 /** POST /api/snfs/disclaimer — record acknowledgment */
 snfsRouter.post('/disclaimer', async (req: Request, res: Response) => {
   try {
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     await db.prepare(
       `INSERT INTO snfs_disclaimer_acknowledgments (id, user_id, version)
        VALUES (?, ?, ?)
@@ -122,7 +122,7 @@ snfsRouter.post('/disclaimer', async (req: Request, res: Response) => {
 snfsRouter.get('/conversations', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const rows = await db.prepare(
       'SELECT * FROM snfs_conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 50',
     ).all(userId);
@@ -136,7 +136,7 @@ snfsRouter.get('/conversations', async (req: Request, res: Response) => {
 snfsRouter.post('/conversations', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const { title = 'New conversation', careRecipientName = '' } = req.body as {
       title?: string; careRecipientName?: string;
     };
@@ -155,7 +155,7 @@ snfsRouter.post('/conversations', async (req: Request, res: Response) => {
 snfsRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     await db.prepare('DELETE FROM snfs_conversations WHERE id = ? AND user_id = ?').run(req.params.id, userId);
     res.json({ ok: true });
   } catch (err) {
@@ -169,7 +169,7 @@ snfsRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
 snfsRouter.get('/conversations/:id/messages', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const conv = await db.prepare('SELECT id FROM snfs_conversations WHERE id = ? AND user_id = ?').get(req.params.id, userId);
     if (!conv) return void res.status(404).json({ error: 'Conversation not found' });
     const rows = await db.prepare(
@@ -185,7 +185,7 @@ snfsRouter.get('/conversations/:id/messages', async (req: Request, res: Response
 snfsRouter.post('/conversations/:id/messages', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const conv = await db.prepare('SELECT id FROM snfs_conversations WHERE id = ? AND user_id = ?').get(req.params.id, userId);
     if (!conv) return void res.status(404).json({ error: 'Conversation not found' });
 
@@ -278,7 +278,7 @@ snfsRouter.post('/conversations/:id/messages', async (req: Request, res: Respons
 snfsRouter.get('/care-team', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const rows = await db.prepare('SELECT * FROM snfs_care_team_members WHERE user_id = ? ORDER BY name ASC').all(userId);
     res.json(rows);
   } catch (err) {
@@ -290,7 +290,7 @@ snfsRouter.get('/care-team', async (req: Request, res: Response) => {
 snfsRouter.post('/care-team', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const { name, role = '', organization = '', phone = '', email = '', notes = '' } = req.body as {
       name: string; role?: string; organization?: string; phone?: string; email?: string; notes?: string;
     };
@@ -311,7 +311,7 @@ snfsRouter.post('/care-team', async (req: Request, res: Response) => {
 snfsRouter.patch('/care-team/:id', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const { name, role, organization, phone, email, notes } = req.body as {
       name?: string; role?: string; organization?: string; phone?: string; email?: string; notes?: string;
     };
@@ -332,7 +332,7 @@ snfsRouter.patch('/care-team/:id', async (req: Request, res: Response) => {
 snfsRouter.delete('/care-team/:id', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     await db.prepare('DELETE FROM snfs_care_team_members WHERE id = ? AND user_id = ?').run(req.params.id, userId);
     res.json({ ok: true });
   } catch (err) {
@@ -346,7 +346,7 @@ snfsRouter.delete('/care-team/:id', async (req: Request, res: Response) => {
 snfsRouter.get('/crisis-plan', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const row = await db.prepare('SELECT * FROM snfs_crisis_plans WHERE user_id = ?').get(userId);
     res.json(row ?? null);
   } catch (err) {
@@ -358,7 +358,7 @@ snfsRouter.get('/crisis-plan', async (req: Request, res: Response) => {
 snfsRouter.put('/crisis-plan', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const {
       careRecipientName = '', triggers = [], warningSigns = [],
       calmingStrategies = [], escalationSteps = [], emergencyContacts = [],
@@ -404,7 +404,7 @@ snfsRouter.put('/crisis-plan', async (req: Request, res: Response) => {
 snfsRouter.get('/progress', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const rows = await db.prepare(
       'SELECT * FROM snfs_progress_logs WHERE user_id = ? ORDER BY log_date DESC LIMIT 90',
     ).all(userId);
@@ -418,7 +418,7 @@ snfsRouter.get('/progress', async (req: Request, res: Response) => {
 snfsRouter.post('/progress', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     const { careRecipientName = '', goal, logDate, rating = 3, notes = '' } = req.body as {
       careRecipientName?: string; goal: string; logDate: string; rating?: number; notes?: string;
     };
@@ -440,7 +440,7 @@ snfsRouter.post('/progress', async (req: Request, res: Response) => {
 snfsRouter.delete('/progress/:id', async (req: Request, res: Response) => {
   try {
     if (!(await requireDisclaimer(req, res))) return;
-    const userId = await getCurrentUserId(req);
+    const userId = getCurrentUserId();
     await db.prepare('DELETE FROM snfs_progress_logs WHERE id = ? AND user_id = ?').run(req.params.id, userId);
     res.json({ ok: true });
   } catch (err) {

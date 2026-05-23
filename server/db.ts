@@ -740,6 +740,146 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_snfs_progress_user ON snfs_progress_logs(user_id, log_date DESC);
     `,
   },
+
+  // ── Session 13: Athlete Performance Hub ──────────────────────────────────
+  {
+    version: 37,
+    name: 'athlete_profiles',
+    sql: `
+      CREATE TABLE IF NOT EXISTS athlete_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        sports TEXT NOT NULL DEFAULT '[]',
+        experience TEXT NOT NULL DEFAULT 'beginner',
+        primary_goal TEXT NOT NULL DEFAULT 'general_fitness',
+        training_days INTEGER NOT NULL DEFAULT 3,
+        session_length INTEGER NOT NULL DEFAULT 60,
+        equipment TEXT NOT NULL DEFAULT '[]',
+        competition_date TEXT,
+        injury_history TEXT NOT NULL DEFAULT '',
+        age INTEGER,
+        weight REAL,
+        height REAL,
+        biological_sex TEXT,
+        dietary_restrictions TEXT NOT NULL DEFAULT '[]',
+        calorie_goal INTEGER,
+        protein_target INTEGER,
+        is_youth INTEGER NOT NULL DEFAULT 0,
+        is_youth_under_14 INTEGER NOT NULL DEFAULT 0,
+        disclaimer_dismissed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+  {
+    version: 38,
+    name: 'training_plans',
+    sql: `
+      CREATE TABLE IF NOT EXISTS training_plans (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        sport TEXT NOT NULL DEFAULT '',
+        phase TEXT NOT NULL DEFAULT 'base',
+        plan_data TEXT NOT NULL DEFAULT '{}',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        target_date TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_plans_user ON training_plans(user_id, is_active, created_at DESC);
+    `,
+  },
+  {
+    version: 39,
+    name: 'training_sessions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS training_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        plan_id TEXT,
+        session_date TEXT NOT NULL,
+        session_type TEXT NOT NULL DEFAULT 'strength',
+        sport TEXT NOT NULL DEFAULT '',
+        exercises TEXT NOT NULL DEFAULT '[]',
+        duration_min INTEGER,
+        rpe INTEGER,
+        heart_rate_avg INTEGER,
+        total_volume REAL,
+        notes TEXT NOT NULL DEFAULT '',
+        mood INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_sessions_user ON training_sessions(user_id, session_date DESC);
+    `,
+  },
+  {
+    version: 40,
+    name: 'nutrition_logs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS nutrition_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        log_date TEXT NOT NULL,
+        meal_type TEXT NOT NULL DEFAULT 'meal',
+        foods TEXT NOT NULL DEFAULT '[]',
+        total_calories INTEGER,
+        protein_g REAL,
+        carbs_g REAL,
+        fat_g REAL,
+        water_ml INTEGER,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_nutrition_user ON nutrition_logs(user_id, log_date DESC);
+    `,
+  },
+  {
+    version: 41,
+    name: 'recovery_logs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS recovery_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        log_date TEXT NOT NULL,
+        sleep_hours REAL,
+        sleep_quality INTEGER,
+        hrv INTEGER,
+        sore_areas TEXT NOT NULL DEFAULT '[]',
+        soreness_level INTEGER,
+        energy_level INTEGER,
+        modalities TEXT NOT NULL DEFAULT '[]',
+        readiness_score INTEGER,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_recovery_user ON recovery_logs(user_id, log_date DESC);
+    `,
+  },
+  {
+    version: 42,
+    name: 'athlete_prs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS athlete_prs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        exercise TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL DEFAULT 'lbs',
+        achieved_at TEXT NOT NULL,
+        session_id TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_prs_user ON athlete_prs(user_id, exercise, achieved_at DESC);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {
