@@ -9,6 +9,8 @@ interface NavItem {
   label: string;
   short: string;
   accent: 'indigo' | 'coral' | 'teal' | 'purple';
+  /** If set, item is only shown when the user is on one of these plan tiers. */
+  planRequired?: string[];
 }
 
 const NAV: NavItem[] = [
@@ -20,8 +22,9 @@ const NAV: NavItem[] = [
   { href: '/health',       label: 'Health Hub',      short: 'Health',   accent: 'coral'  },
   { href: '/athlete',      label: 'Athlete Hub',     short: 'Athlete',  accent: 'teal'   },
   { href: '/special-needs',label: 'Family Support',  short: 'SNFS',     accent: 'purple' },
-  { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple' },
-  { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal'   },
+  // Parental Controls + Kids Zone: Family plan and above only
+  { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple', planRequired: ['family', 'network', 'elite'] },
+  { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal',   planRequired: ['family', 'network', 'elite'] },
   { href: '/student',      label: 'Student Mode',    short: 'Student',  accent: 'coral'  },
   { href: '/business',     label: 'Business Hub',    short: 'Business', accent: 'teal'   },
 ];
@@ -57,7 +60,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </a>
       <Header user={user} />
       <div className="flex-1 flex">
-        <Sidebar currentPath={location} />
+        <Sidebar currentPath={location} planTier={user?.plan_tier} />
         <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 px-6 py-8 lg:px-10 outline-none">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
@@ -101,14 +104,18 @@ function Header({ user }: { user?: User }) {
   );
 }
 
-function Sidebar({ currentPath }: { currentPath: string }) {
+function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: string }) {
+  const visibleNav = NAV.filter(
+    (item) => !item.planRequired || (planTier && item.planRequired.includes(planTier)),
+  );
+
   return (
     <nav
       className="hidden lg:block w-60 shrink-0 border-r border-surface-ink/[0.06] bg-surface-raised/40 px-3 py-6"
       aria-label="Primary"
     >
       <ul className="space-y-0.5">
-        {NAV.map((item) => {
+        {visibleNav.map((item) => {
           const active =
             item.href === '/' ? currentPath === '/' : currentPath.startsWith(item.href);
           return (
@@ -129,11 +136,18 @@ function Sidebar({ currentPath }: { currentPath: string }) {
           );
         })}
       </ul>
-      <div className="mt-8 px-3 text-[10px] uppercase tracking-wider text-surface-muted font-semibold">
+      {planTier && ['family', 'network', 'elite'].includes(planTier) && (
+        <div className="mt-4 px-3">
+          <div className="rounded-lg bg-brand-purple/10 px-3 py-2 text-xs text-brand-purple font-semibold">
+            👨‍👩‍👧 Family features active
+          </div>
+        </div>
+      )}
+      <div className="mt-6 px-3 text-[10px] uppercase tracking-wider text-surface-muted font-semibold">
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Scaffold ready. Feature modules ship session by session.
+        Session 9 — Parental Controls + Kids Zone.
       </div>
     </nav>
   );

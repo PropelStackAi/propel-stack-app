@@ -465,6 +465,76 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_doc_shares_doc ON document_shares(document_id);
     `,
   },
+  // ── Session 9: Parental Controls + Kids Zone ─────────────────────────────
+  {
+    version: 22,
+    name: 'child_profiles',
+    sql: `
+      CREATE TABLE IF NOT EXISTS child_profiles (
+        id TEXT PRIMARY KEY,
+        parent_user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        avatar_emoji TEXT NOT NULL DEFAULT '🧒',
+        age_range TEXT NOT NULL DEFAULT 'child',
+        content_filter INTEGER NOT NULL DEFAULT 1,
+        ai_logging_enabled INTEGER NOT NULL DEFAULT 1,
+        screen_time_limit_minutes INTEGER NOT NULL DEFAULT 60,
+        app_sections_approved TEXT NOT NULL DEFAULT '["stories","homework","games"]',
+        pin_hash TEXT,
+        emergency_contact_name TEXT NOT NULL DEFAULT '',
+        emergency_contact_phone TEXT NOT NULL DEFAULT '',
+        emergency_contact_relation TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (parent_user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_child_profiles_parent ON child_profiles(parent_user_id);
+    `,
+  },
+  {
+    version: 23,
+    name: 'child_screen_time',
+    sql: `
+      CREATE TABLE IF NOT EXISTS child_screen_time (
+        id TEXT PRIMARY KEY,
+        child_profile_id TEXT NOT NULL,
+        session_date TEXT NOT NULL,
+        minutes_used INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (child_profile_id, session_date),
+        FOREIGN KEY (child_profile_id) REFERENCES child_profiles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_child_time ON child_screen_time(child_profile_id, session_date);
+    `,
+  },
+  {
+    version: 24,
+    name: 'kids_stars',
+    sql: `
+      CREATE TABLE IF NOT EXISTS kids_stars (
+        id TEXT PRIMARY KEY,
+        child_profile_id TEXT NOT NULL,
+        total_stars INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (child_profile_id),
+        FOREIGN KEY (child_profile_id) REFERENCES child_profiles(id) ON DELETE CASCADE
+      );
+    `,
+  },
+  {
+    version: 25,
+    name: 'kids_ai_sessions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS kids_ai_sessions (
+        id TEXT PRIMARY KEY,
+        child_profile_id TEXT NOT NULL,
+        session_type TEXT NOT NULL,
+        interaction_count INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (child_profile_id) REFERENCES child_profiles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_kids_ai ON kids_ai_sessions(child_profile_id, created_at);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

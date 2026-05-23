@@ -9,6 +9,8 @@ import { financialRouter } from './routes/financial.js';
 import { assistantRouter } from './routes/assistant.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { documentsRouter } from './routes/documents.js';
+import { parentalRouter } from './routes/parental.js';
+import { kidsRouter } from './routes/kids.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -50,6 +52,8 @@ app.use('/api/financial', financialRouter);           // Session 3 -- Financial 
 app.use('/api/assistant', assistantRouter);           // Session 4 -- AI Assistant
 app.use('/api/dashboard', dashboardRouter);           // Session 5 -- Dashboard
 app.use('/api/documents', documentsRouter);           // Session 7 -- Document Vault
+app.use('/api/parental', parentalRouter);             // Session 9 -- Parental Controls
+app.use('/api/kids', kidsRouter);                     // Session 9 -- Kids Zone
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
