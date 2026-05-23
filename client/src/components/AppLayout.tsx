@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: '/documents',    label: 'Document Vault',  short: 'Vault',    accent: 'indigo' },
   { href: '/health',       label: 'Health Hub',      short: 'Health',   accent: 'coral'  },
   { href: '/athlete',      label: 'Athlete Hub',     short: 'Athlete',  accent: 'teal'   },
+  { href: '/social',       label: 'Social & Media',  short: 'Social',   accent: 'teal'   },
   { href: '/special-needs',label: 'Family Support',  short: 'SNFS',     accent: 'purple' },
   // Parental Controls + Kids Zone: Family plan and above only
   { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple', planRequired: ['family', 'network', 'elite'] },

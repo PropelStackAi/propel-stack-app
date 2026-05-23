@@ -880,6 +880,134 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_prs_user ON athlete_prs(user_id, exercise, achieved_at DESC);
     `,
   },
+  // ─── Session 14 — Social & Media Hub ───────────────────────────────────────
+  {
+    version: 43,
+    name: 'social_connections',
+    sql: `
+      CREATE TABLE IF NOT EXISTS social_connections (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        display_name TEXT NOT NULL DEFAULT '',
+        avatar_url TEXT NOT NULL DEFAULT '',
+        access_token TEXT NOT NULL DEFAULT '',
+        refresh_token TEXT NOT NULL DEFAULT '',
+        token_expiry TIMESTAMPTZ,
+        scopes TEXT NOT NULL DEFAULT '[]',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, platform),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_social_conn_user ON social_connections(user_id);
+    `,
+  },
+  {
+    version: 44,
+    name: 'media_connections',
+    sql: `
+      CREATE TABLE IF NOT EXISTS media_connections (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        service TEXT NOT NULL,
+        service_type TEXT NOT NULL DEFAULT 'streaming',
+        deep_link_url TEXT NOT NULL DEFAULT '',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, service),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_media_conn_user ON media_connections(user_id);
+    `,
+  },
+  {
+    version: 45,
+    name: 'social_digests',
+    sql: `
+      CREATE TABLE IF NOT EXISTS social_digests (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        digest_date TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '{}',
+        model_used TEXT NOT NULL DEFAULT 'gpt-4o-mini',
+        tokens_used INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, digest_date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_digest_user ON social_digests(user_id, digest_date DESC);
+    `,
+  },
+  {
+    version: 46,
+    name: 'watchlist_topics',
+    sql: `
+      CREATE TABLE IF NOT EXISTS watchlist_topics (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        topic TEXT NOT NULL,
+        sources TEXT NOT NULL DEFAULT '[]',
+        alert_enabled BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist_topics(user_id);
+    `,
+  },
+  {
+    version: 47,
+    name: 'news_sources',
+    sql: `
+      CREATE TABLE IF NOT EXISTS news_sources (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        source_name TEXT NOT NULL,
+        rss_url TEXT NOT NULL,
+        bias_label TEXT NOT NULL DEFAULT 'unknown',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_news_user ON news_sources(user_id);
+    `,
+  },
+  {
+    version: 48,
+    name: 'screen_time_log',
+    sql: `
+      CREATE TABLE IF NOT EXISTS screen_time_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        session_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        session_end TIMESTAMPTZ,
+        duration_seconds INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_screen_time_user ON screen_time_log(user_id, session_start DESC);
+    `,
+  },
+  {
+    version: 49,
+    name: 'scheduled_posts',
+    sql: `
+      CREATE TABLE IF NOT EXISTS scheduled_posts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        platforms TEXT NOT NULL DEFAULT '[]',
+        content TEXT NOT NULL DEFAULT '',
+        media_urls TEXT NOT NULL DEFAULT '[]',
+        scheduled_for TIMESTAMPTZ,
+        status TEXT NOT NULL DEFAULT 'draft',
+        error_message TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_posts_user ON scheduled_posts(user_id, scheduled_for DESC);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

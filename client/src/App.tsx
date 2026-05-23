@@ -11,6 +11,7 @@ import { ParentalControls } from './pages/ParentalControls';
 import { KidsZone } from './pages/KidsZone';
 import { SpecialNeedsHub } from './pages/SpecialNeedsHub';
 import { AthleteHub } from './pages/AthleteHub';
+import { SocialHub } from './pages/SocialHub';
 import { EmergencyMode } from './pages/EmergencyMode';
 import { StudentMode } from './pages/StudentMode';
 import { BusinessHub } from './pages/BusinessHub';
@@ -53,6 +54,7 @@ export function App() {
               <Route path="/kids" component={KidsZone} />
               <Route path="/special-needs" component={SpecialNeedsHub} />
               <Route path="/athlete" component={AthleteHub} />
+              <Route path="/social" component={SocialHub} />
               <Route path="/student" component={StudentMode} />
               <Route path="/business" component={BusinessHub} />
               <Route path="/family" component={FamilyHub} />
