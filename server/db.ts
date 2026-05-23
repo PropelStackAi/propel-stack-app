@@ -1008,6 +1008,29 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_posts_user ON scheduled_posts(user_id, scheduled_for DESC);
     `,
   },
+  // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
+  {
+    version: 50,
+    name: 'weekly_recaps',
+    sql: `
+      CREATE TABLE IF NOT EXISTS weekly_recaps (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        week_start TEXT NOT NULL,
+        recap_text TEXT NOT NULL DEFAULT '',
+        insight_key TEXT NOT NULL DEFAULT '',
+        life_score_delta REAL,
+        next_week_intention TEXT NOT NULL DEFAULT '',
+        next_week_habit TEXT NOT NULL DEFAULT '',
+        next_week_goal TEXT NOT NULL DEFAULT '',
+        opened_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, week_start),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_recap_user ON weekly_recaps(user_id, week_start DESC);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

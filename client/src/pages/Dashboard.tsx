@@ -7,6 +7,7 @@ import { HabitStrip } from '../features/dashboard/components/HabitStrip';
 import { WeatherWidget } from '../features/dashboard/components/WeatherWidget';
 import { DashboardReminders } from '../features/dashboard/components/DashboardReminders';
 import { RecentActivity } from '../features/dashboard/components/RecentActivity';
+import { DashboardRecapBanner } from '../features/recap/components/DashboardRecapBanner';
 
 interface User { display_name: string }
 
@@ -21,6 +22,10 @@ export function Dashboard() {
       <h1 className="font-display font-extrabold text-3xl tracking-tight text-surface-ink mb-4">
         {greeting}, {firstName}
       </h1>
+
+      <div className="mb-4">
+        <DashboardRecapBanner />
+      </div>
 
       <MorningBrief />
 
