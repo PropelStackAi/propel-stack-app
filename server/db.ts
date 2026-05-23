@@ -634,6 +634,112 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_kids_ai ON kids_ai_sessions(child_profile_id, created_at);
     `,
   },
+
+  // ── Session 12: Special Needs Family Support Hub ──────────────────────────
+  {
+    version: 31,
+    name: 'snfs_disclaimer_acknowledgments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_disclaimer_acknowledgments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        version TEXT NOT NULL DEFAULT 'PSAI-SNFS-DISC-v1.0',
+        acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, version),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+  {
+    version: 32,
+    name: 'snfs_conversations',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT 'New conversation',
+        care_recipient_name TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_snfs_conv_user ON snfs_conversations(user_id, updated_at DESC);
+    `,
+  },
+  {
+    version: 33,
+    name: 'snfs_messages',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('user','assistant')),
+        content TEXT NOT NULL,
+        is_crisis INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (conversation_id) REFERENCES snfs_conversations(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_snfs_msg_conv ON snfs_messages(conversation_id, created_at);
+    `,
+  },
+  {
+    version: 34,
+    name: 'snfs_care_team_members',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_care_team_members (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT '',
+        organization TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_snfs_team_user ON snfs_care_team_members(user_id);
+    `,
+  },
+  {
+    version: 35,
+    name: 'snfs_crisis_plans',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_crisis_plans (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        care_recipient_name TEXT NOT NULL DEFAULT '',
+        triggers TEXT NOT NULL DEFAULT '[]',
+        warning_signs TEXT NOT NULL DEFAULT '[]',
+        calming_strategies TEXT NOT NULL DEFAULT '[]',
+        escalation_steps TEXT NOT NULL DEFAULT '[]',
+        emergency_contacts TEXT NOT NULL DEFAULT '[]',
+        safe_person TEXT NOT NULL DEFAULT '',
+        safe_place TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+  {
+    version: 36,
+    name: 'snfs_progress_logs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS snfs_progress_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        care_recipient_name TEXT NOT NULL DEFAULT '',
+        goal TEXT NOT NULL,
+        log_date TEXT NOT NULL,
+        rating INTEGER NOT NULL DEFAULT 3 CHECK (rating BETWEEN 1 AND 5),
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_snfs_progress_user ON snfs_progress_logs(user_id, log_date DESC);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

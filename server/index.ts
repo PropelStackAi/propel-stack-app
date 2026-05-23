@@ -12,6 +12,7 @@ import { documentsRouter } from './routes/documents.js';
 import { healthRouter } from './routes/health.js';
 import { parentalRouter } from './routes/parental.js';
 import { kidsRouter } from './routes/kids.js';
+import { snfsRouter } from './routes/snfs.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -56,6 +57,7 @@ app.use('/api/documents', documentsRouter);           // Session 7 -- Document V
 app.use('/api/health', healthRouter);                 // Session 10 -- Health Hub + Emergency Mode
 app.use('/api/parental', parentalRouter);             // Session 9 -- Parental Controls
 app.use('/api/kids', kidsRouter);                     // Session 9 -- Kids Zone
+app.use('/api/snfs', snfsRouter);                     // Session 12 -- Special Needs Family Support
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
