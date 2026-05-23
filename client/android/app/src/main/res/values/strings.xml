@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Propel Stack AI</string>
+    <string name="title_activity_main">Propel Stack AI</string>
+    <string name="package_name">ai.propelstack.app</string>
+    <string name="custom_url_scheme">ai.propelstack.app</string>
+</resources>

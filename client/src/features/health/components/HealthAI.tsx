@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useHealthAI } from '../api';
 import { HEALTH_DISCLAIMER } from '../types';
+import { hapticTap } from '../../../lib/native';
 
 interface Message {
   role: 'user' | 'ai';
@@ -30,6 +31,7 @@ export function HealthAI(): JSX.Element {
   function send(text: string) {
     const q = text.trim();
     if (!q) return;
+    void hapticTap();
     setInput('');
     setMessages((m) => [...m, { role: 'user', text: q }]);
 

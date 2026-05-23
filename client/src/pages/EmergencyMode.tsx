@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
+import { getCurrentPosition, hapticMedium } from '../lib/native';
 import type { EmergencyCard } from '../features/health/api';
 
 /**
@@ -33,12 +34,11 @@ function EmergencyModeInner(): JSX.Element {
   const [locError, setLocError] = useState('');
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setLocError('Location unavailable'),
-      { timeout: 8000 },
-    );
+    // Uses Capacitor Geolocation on native (proper permission flow + higher accuracy),
+    // falls back to the browser Geolocation API on web.
+    getCurrentPosition()
+      .then((pos) => setLocation(pos))
+      .catch(() => setLocError('Location unavailable'));
   }, []);
 
   const profile = data?.profile;
@@ -227,6 +227,7 @@ function EmergencyBtn({ href, label, sublabel, big }: { href: string; label: str
   return (
     <a
       href={href}
+      onClick={() => void hapticMedium()}
       className={[
         'block rounded-2xl bg-white text-red-700 text-center p-4 shadow-raised hover:bg-red-50 transition-colors',
         big ? 'ring-4 ring-red-300 ring-offset-2 ring-offset-red-700' : '',

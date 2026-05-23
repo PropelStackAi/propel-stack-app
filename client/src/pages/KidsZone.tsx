@@ -9,6 +9,7 @@ import { BrainGame } from '../features/kids/components/BrainGame';
 import { StarRewards } from '../features/kids/components/StarRewards';
 import type { ActivityType } from '../features/kids/types';
 import { ACTIVITY_CONFIG } from '../features/kids/types';
+import { hapticTap } from '../lib/native';
 
 /**
  * Kids Zone — Session 9.
@@ -167,7 +168,7 @@ export function KidsZone(): JSX.Element {
               return (
                 <button
                   key={type}
-                  onClick={() => approved && setActivity(type)}
+                  onClick={() => { if (approved) { void hapticTap(); setActivity(type); } }}
                   className={[
                     'rounded-2xl p-5 flex flex-col items-center gap-2 border-2 transition-all',
                     approved
