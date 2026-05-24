@@ -31,7 +31,8 @@ const NAV: NavItem[] = [
   { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal',   planRequired: ['family', 'network', 'elite'] },
   { href: '/student',      label: 'Student Mode',    short: 'Student',  accent: 'coral'  },
   { href: '/business',       label: 'Business Hub',       short: 'Business', accent: 'teal'   },
-  { href: '/notifications',  label: 'Notifications',      short: 'Alerts',   accent: 'coral'  },
+  { href: '/notifications',    label: 'Notifications',      short: 'Alerts',   accent: 'coral'  },
+  { href: '/personal-finance', label: 'Personal Finance',   short: 'Finance',  accent: 'indigo' },
 ];
 
 interface User {
@@ -169,7 +170,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancement 17 live. Smart Notifications, Business Hub, Student Mode.
+        Enhancement 18 live. Personal Finance Hub, Smart Notifications.
       </div>
     </nav>
   );

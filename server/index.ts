@@ -20,6 +20,7 @@ import { streaksRouter, lifeWinsRouter } from './routes/streaks.js';
 import { studentRouter } from './routes/student.js';
 import { businessRouter } from './routes/business.js';
 import { notificationsRouter } from './routes/notifications.js';
+import { personalFinanceRouter } from './routes/personalFinance.js';
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -76,6 +77,7 @@ app.use('/api/life-wins', lifeWinsRouter);            // Session 16 -- Life Wins
 app.use('/api/student', studentRouter);               // Session 14 Bug Fix -- Student Mode
 app.use('/api/business', businessRouter);             // Session 15 -- Business Hub
 app.use('/api/notifications', notificationsRouter);   // Enhancement 17 -- Smart Notification Intelligence
+app.use('/api/personal-finance', personalFinanceRouter); // Enhancement 18 -- Personal Finance Hub
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

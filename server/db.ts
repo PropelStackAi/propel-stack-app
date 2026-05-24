@@ -1205,6 +1205,99 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 18 — Personal Finance Hub ───────────────────────────────────
+  {
+    version: 55,
+    name: 'personal_finance_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS finance_accounts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        plaid_item_id TEXT NOT NULL DEFAULT '',
+        plaid_acct_id TEXT NOT NULL DEFAULT '',
+        account_type TEXT NOT NULL DEFAULT 'checking',
+        display_name TEXT NOT NULL,
+        balance REAL NOT NULL DEFAULT 0,
+        balance_date TEXT NOT NULL DEFAULT '',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_accts_user ON finance_accounts(user_id, is_active);
+
+      CREATE TABLE IF NOT EXISTS finance_transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        account_id TEXT,
+        plaid_txn_id TEXT NOT NULL DEFAULT '',
+        amount REAL NOT NULL DEFAULT 0,
+        category TEXT NOT NULL DEFAULT 'Other',
+        user_category TEXT NOT NULL DEFAULT '',
+        merchant_name TEXT NOT NULL DEFAULT '',
+        txn_date TEXT NOT NULL,
+        is_recurring INTEGER NOT NULL DEFAULT 0,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (account_id) REFERENCES finance_accounts(id) ON DELETE SET NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_txns_user ON finance_transactions(user_id, txn_date DESC);
+      CREATE INDEX IF NOT EXISTS idx_fin_txns_cat ON finance_transactions(user_id, category, txn_date DESC);
+
+      CREATE TABLE IF NOT EXISTS finance_budgets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        monthly_amt REAL NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, category),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_budgets_user ON finance_budgets(user_id);
+
+      CREATE TABLE IF NOT EXISTS finance_bills (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        due_day INTEGER NOT NULL DEFAULT 1,
+        recurrence TEXT NOT NULL DEFAULT 'monthly',
+        is_autopay INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        category TEXT NOT NULL DEFAULT 'Bills & Utilities',
+        last_paid_date TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_bills_user ON finance_bills(user_id, is_active);
+
+      CREATE TABLE IF NOT EXISTS finance_savings_goals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        target_amount REAL NOT NULL DEFAULT 0,
+        current_amount REAL NOT NULL DEFAULT 0,
+        target_date TEXT NOT NULL DEFAULT '',
+        emoji TEXT NOT NULL DEFAULT '💰',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_goals_user ON finance_savings_goals(user_id);
+
+      CREATE TABLE IF NOT EXISTS finance_net_worth_items (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        item_type TEXT NOT NULL DEFAULT 'asset',
+        amount REAL NOT NULL DEFAULT 0,
+        category TEXT NOT NULL DEFAULT 'Other',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_nw_user ON finance_net_worth_items(user_id, item_type);
+    `,
+  },
+
   // ─── Enhancement 17 — Smart Notification Intelligence ────────────────────────
   {
     version: 54,
