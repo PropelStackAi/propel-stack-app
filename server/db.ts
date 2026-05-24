@@ -1555,6 +1555,37 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 22 — AI Life Coach Mode ─────────────────────────────────────
+  {
+    version: 59,
+    name: 'ai_life_coach',
+    sql: `
+      CREATE TABLE IF NOT EXISTS coaching_preferences (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        ai_coach_enabled INTEGER NOT NULL DEFAULT 1,
+        mental_health_enabled INTEGER NOT NULL DEFAULT 0,
+        last_generated TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS coaching_insights (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        insight_type TEXT NOT NULL,
+        insight_text TEXT NOT NULL,
+        hubs_used TEXT NOT NULL DEFAULT '',
+        dismissed INTEGER NOT NULL DEFAULT 0,
+        dismiss_type TEXT,
+        delivered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        opened_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_coaching_user ON coaching_insights(user_id, created_at DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

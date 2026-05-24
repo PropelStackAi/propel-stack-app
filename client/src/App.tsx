@@ -31,6 +31,7 @@ import { PersonalFinanceHub } from './pages/PersonalFinanceHub';
 import { RelationshipsHub } from './pages/RelationshipsHub';
 import { LearningHub }        from './pages/LearningHub';
 import { HomePropertyHub }   from './pages/HomePropertyHub';
+import { AICoach }           from './pages/AICoach';
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -80,6 +81,7 @@ export function App() {
               <Route path="/relationships" component={RelationshipsHub} />
               <Route path="/learning"       component={LearningHub} />
               <Route path="/home-property"  component={HomePropertyHub} />
+              <Route path="/coach"          component={AICoach} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

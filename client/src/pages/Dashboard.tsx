@@ -9,6 +9,7 @@ import { DashboardReminders } from '../features/dashboard/components/DashboardRe
 import { RecentActivity } from '../features/dashboard/components/RecentActivity';
 import { DashboardRecapBanner } from '../features/recap/components/DashboardRecapBanner';
 import { StreakCard } from '../features/streaks/components/StreakCard';
+import { CoachingInsightCard } from '../features/coaching/components/CoachingInsightCard';
 
 interface User { display_name: string }
 
@@ -27,6 +28,7 @@ export function Dashboard() {
       <div className="mb-4 space-y-3">
         <DashboardRecapBanner />
         <StreakCard />
+        <CoachingInsightCard compact />
       </div>
 
       <MorningBrief />
