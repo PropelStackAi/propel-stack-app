@@ -1372,6 +1372,50 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 20 — Learning Hub ──────────────────────────────────────────
+  {
+    version: 57,
+    name: 'learning_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS learning_items (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'book',
+        title TEXT NOT NULL,
+        author TEXT NOT NULL DEFAULT '',
+        platform TEXT NOT NULL DEFAULT '',
+        url TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'to-read',
+        progress INTEGER NOT NULL DEFAULT 0,
+        total_pages INTEGER,
+        tags TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        key_takeaway TEXT NOT NULL DEFAULT '',
+        exam_date TEXT,
+        study_hours_logged REAL NOT NULL DEFAULT 0,
+        pass_fail TEXT,
+        completed_at TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_learning_items_user ON learning_items(user_id, type, status);
+
+      CREATE TABLE IF NOT EXISTS learning_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        duration_minutes INTEGER NOT NULL DEFAULT 0,
+        pages_read INTEGER NOT NULL DEFAULT 0,
+        notes TEXT NOT NULL DEFAULT '',
+        logged_date TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (item_id) REFERENCES learning_items(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_learning_logs_user ON learning_logs(user_id, logged_date DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

@@ -29,6 +29,7 @@ import { ProfileSelect } from './pages/ProfileSelect';
 import { Notifications } from './pages/Notifications';
 import { PersonalFinanceHub } from './pages/PersonalFinanceHub';
 import { RelationshipsHub } from './pages/RelationshipsHub';
+import { LearningHub }      from './pages/LearningHub';
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -76,6 +77,7 @@ export function App() {
               <Route path="/notifications" component={Notifications} />
               <Route path="/personal-finance" component={PersonalFinanceHub} />
               <Route path="/relationships" component={RelationshipsHub} />
+              <Route path="/learning"       component={LearningHub} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>
