@@ -26,6 +26,7 @@ import { TravelMode } from './pages/TravelMode';
 import { FamilyNetwork } from './pages/FamilyNetwork';
 import { AppIntegrations } from './pages/AppIntegrations';
 import { ProfileSelect } from './pages/ProfileSelect';
+import { Notifications } from './pages/Notifications';
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -70,6 +71,7 @@ export function App() {
               <Route path="/network" component={FamilyNetwork} />
               <Route path="/apps" component={AppIntegrations} />
               <Route path="/profiles" component={ProfileSelect} />
+              <Route path="/notifications" component={Notifications} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

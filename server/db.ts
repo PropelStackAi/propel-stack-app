@@ -1205,6 +1205,39 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 17 — Smart Notification Intelligence ────────────────────────
+  {
+    version: 54,
+    name: 'notification_intelligence',
+    sql: `
+      CREATE TABLE IF NOT EXISTS notification_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        notif_type TEXT NOT NULL,
+        trigger_key TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL,
+        body TEXT NOT NULL DEFAULT '',
+        sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        opened_at TIMESTAMPTZ,
+        hour_of_day INTEGER NOT NULL DEFAULT 0,
+        day_of_week INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_notif_user ON notification_events(user_id, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_notif_trigger ON notification_events(user_id, trigger_key, sent_at DESC);
+
+      CREATE TABLE IF NOT EXISTS notification_preferences (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        trigger_key TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        UNIQUE(user_id, trigger_key),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_notif_prefs_user ON notification_preferences(user_id);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
 import { QuickCapture } from '../features/dashboard/components/QuickCapture';
+import { useUnreadCount } from '../features/notifications/api';
 
 interface NavItem {
   href: string;
@@ -29,7 +30,8 @@ const NAV: NavItem[] = [
   { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple', planRequired: ['family', 'network', 'elite'] },
   { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal',   planRequired: ['family', 'network', 'elite'] },
   { href: '/student',      label: 'Student Mode',    short: 'Student',  accent: 'coral'  },
-  { href: '/business',     label: 'Business Hub',    short: 'Business', accent: 'teal'   },
+  { href: '/business',       label: 'Business Hub',       short: 'Business', accent: 'teal'   },
+  { href: '/notifications',  label: 'Notifications',      short: 'Alerts',   accent: 'coral'  },
 ];
 
 interface User {
@@ -74,7 +76,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
+function BellIcon({ count }: { count: number }) {
+  return (
+    <Link href="/notifications" className="relative flex-shrink-0" aria-label={`Notifications${count > 0 ? ` (${count} unread)` : ''}`}>
+      <span className="text-xl select-none">🔔</span>
+      {count > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-brand-coral text-white text-[9px] font-bold grid place-items-center">
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 function Header({ user }: { user?: User }) {
+  const { data: unreadData } = useUnreadCount();
+  const unread = unreadData?.count ?? 0;
+
   return (
     <header className="sticky top-0 z-30 border-b border-surface-ink/[0.06] bg-surface-raised/80 backdrop-blur">
       <div className="flex items-center justify-between px-6 py-3 lg:px-10">
@@ -91,6 +109,7 @@ function Header({ user }: { user?: User }) {
         </Link>
         {user && (
           <div className="flex items-center gap-3">
+            <BellIcon count={unread} />
             <span className="hidden sm:inline chip text-surface-muted">
               <span className="capitalize">{user.plan_tier}</span> plan
             </span>
@@ -150,7 +169,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Session 15/16 + Bug Fixes. Business Hub, Student Mode live.
+        Enhancement 17 live. Smart Notifications, Business Hub, Student Mode.
       </div>
     </nav>
   );
