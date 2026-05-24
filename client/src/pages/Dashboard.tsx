@@ -8,6 +8,7 @@ import { WeatherWidget } from '../features/dashboard/components/WeatherWidget';
 import { DashboardReminders } from '../features/dashboard/components/DashboardReminders';
 import { RecentActivity } from '../features/dashboard/components/RecentActivity';
 import { DashboardRecapBanner } from '../features/recap/components/DashboardRecapBanner';
+import { StreakCard } from '../features/streaks/components/StreakCard';
 
 interface User { display_name: string }
 
@@ -23,8 +24,9 @@ export function Dashboard() {
         {greeting}, {firstName}
       </h1>
 
-      <div className="mb-4">
+      <div className="mb-4 space-y-3">
         <DashboardRecapBanner />
+        <StreakCard />
       </div>
 
       <MorningBrief />

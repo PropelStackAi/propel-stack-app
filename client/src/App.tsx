@@ -13,6 +13,7 @@ import { SpecialNeedsHub } from './pages/SpecialNeedsHub';
 import { AthleteHub } from './pages/AthleteHub';
 import { SocialHub } from './pages/SocialHub';
 import { WeeklyRecap } from './pages/WeeklyRecap';
+import { StreaksAndWins } from './pages/StreaksAndWins';
 import { EmergencyMode } from './pages/EmergencyMode';
 import { StudentMode } from './pages/StudentMode';
 import { BusinessHub } from './pages/BusinessHub';
@@ -57,6 +58,7 @@ export function App() {
               <Route path="/athlete" component={AthleteHub} />
               <Route path="/social" component={SocialHub} />
               <Route path="/recap" component={WeeklyRecap} />
+              <Route path="/streaks" component={StreaksAndWins} />
               <Route path="/student" component={StudentMode} />
               <Route path="/business" component={BusinessHub} />
               <Route path="/family" component={FamilyHub} />

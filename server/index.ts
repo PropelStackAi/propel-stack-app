@@ -16,6 +16,8 @@ import { snfsRouter } from './routes/snfs.js';
 import { athleteRouter } from './routes/athlete.js';
 import { socialRouter } from './routes/social.js';
 import { recapRouter } from './routes/recap.js';
+import { streaksRouter, lifeWinsRouter } from './routes/streaks.js';
+import { touchStreak } from './lib/streaks.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -48,6 +50,8 @@ app.get('/api/me', async (_req, res) => {
     .prepare('SELECT id, email, display_name, plan_tier, ai_tokens_used_this_month FROM users WHERE id = ?')
     .get(userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
+  // Touch daily_login streak on every app open (Session 16)
+  touchStreak(userId, 'daily_login').catch(() => {/* non-fatal */});
   res.json(user);
 });
 
@@ -64,6 +68,8 @@ app.use('/api/snfs', snfsRouter);                     // Session 12 -- Special N
 app.use('/api/athlete', athleteRouter);               // Session 13 -- Athlete Performance Hub
 app.use('/api/social', socialRouter);                 // Session 14 -- Social & Media Hub
 app.use('/api/recap', recapRouter);                   // Session 15 -- AI Weekly Life Recap
+app.use('/api/streaks', streaksRouter);               // Session 16 -- Streaks & Life Wins
+app.use('/api/life-wins', lifeWinsRouter);            // Session 16 -- Life Wins Feed
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

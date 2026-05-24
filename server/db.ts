@@ -1008,6 +1008,41 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_posts_user ON scheduled_posts(user_id, scheduled_for DESC);
     `,
   },
+  // ─── Session 16 — Streaks & Life Wins ──────────────────────────────────────
+  {
+    version: 51,
+    name: 'streaks_and_life_wins',
+    sql: `
+      CREATE TABLE IF NOT EXISTS streaks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        streak_type TEXT NOT NULL,
+        habit_id TEXT NOT NULL DEFAULT '',
+        current_len INTEGER NOT NULL DEFAULT 0,
+        longest_ever INTEGER NOT NULL DEFAULT 0,
+        last_logged TEXT,
+        grace_used INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, streak_type, habit_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_streaks_user ON streaks(user_id, streak_type);
+
+      CREATE TABLE IF NOT EXISTS life_wins (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        win_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        detail TEXT NOT NULL DEFAULT '',
+        source_hub TEXT NOT NULL DEFAULT '',
+        is_shared INTEGER NOT NULL DEFAULT 0,
+        occurred_on TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_life_wins_user ON life_wins(user_id, occurred_on DESC);
+    `,
+  },
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

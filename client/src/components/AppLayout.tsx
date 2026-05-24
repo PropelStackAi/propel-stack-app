@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { href: '/athlete',      label: 'Athlete Hub',     short: 'Athlete',  accent: 'teal'   },
   { href: '/social',       label: 'Social & Media',  short: 'Social',   accent: 'teal'   },
   { href: '/recap',        label: 'Weekly Recap',    short: 'Recap',    accent: 'teal'   },
+  { href: '/streaks',      label: 'Streaks & Wins',  short: 'Streaks',  accent: 'coral'  },
   { href: '/special-needs',label: 'Family Support',  short: 'SNFS',     accent: 'purple' },
   // Parental Controls + Kids Zone: Family plan and above only
   { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple', planRequired: ['family', 'network', 'elite'] },
@@ -149,7 +150,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Session 15 — AI Weekly Life Recap.
+        Session 16 — Streaks &amp; Life Wins.
       </div>
     </nav>
   );
