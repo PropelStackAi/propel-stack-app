@@ -48,6 +48,11 @@ const NAV: NavItem[] = [
   { href: '/career',            label: 'Career Hub',         short: 'Career',    accent: 'indigo' },
   { href: '/insights',          label: 'Life Insights',      short: 'Insights',  accent: 'purple' },
   { href: '/advisor',           label: 'Advisor Platform',   short: 'Advisor',   accent: 'teal'   },
+  { href: '/digital-twin',      label: 'Digital Twin',       short: 'Twin',      accent: 'purple' },
+  { href: '/companion',         label: 'AI Companion',       short: 'Companion', accent: 'coral'  },
+  { href: '/pets',              label: 'Pet Hub',            short: 'Pets',      accent: 'teal'   },
+  { href: '/sleep',             label: 'Sleep Coach',        short: 'Sleep',     accent: 'indigo' },
+  { href: '/legal',             label: 'Legal Hub',          short: 'Legal',     accent: 'purple' },
 ];
 
 interface User {
@@ -185,7 +190,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancements 26–35 live. Security, Credential Bridge, AI Agent, Voice, Timeline, Estate, Travel, Grocery, Career, Insights, Advisor.
+        Enhancements 26–40 live. Digital Twin, AI Companion, Pet Hub, Sleep Coach, Legal Hub, and all prior features active.
       </div>
     </nav>
   );

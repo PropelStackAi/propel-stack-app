@@ -1965,6 +1965,196 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 36 — AI Personal Digital Twin ──────────────────────────────
+  {
+    version: 74,
+    name: 'digital_twin',
+    sql: `
+      CREATE TABLE IF NOT EXISTS digital_twin_profile (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        behavioral_model JSONB NOT NULL DEFAULT '{}',
+        voice_model JSONB NOT NULL DEFAULT '{}',
+        decision_patterns JSONB NOT NULL DEFAULT '{}',
+        long_term_memory JSONB NOT NULL DEFAULT '[]',
+        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS twin_memory_entries (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'preference',
+        fact TEXT NOT NULL,
+        confidence REAL NOT NULL DEFAULT 0.7,
+        source_hubs JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_twin_memories_user ON twin_memory_entries(user_id, category);
+    `,
+  },
+
+  // ─── Enhancement 37 — AI Companion Mode ─────────────────────────────────────
+  {
+    version: 75,
+    name: 'companion_mode',
+    sql: `
+      CREATE TABLE IF NOT EXISTS companion_profile (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        companion_name TEXT NOT NULL DEFAULT 'Alex',
+        personality_style TEXT NOT NULL DEFAULT 'warm',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS companion_conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        trigger_type TEXT NOT NULL DEFAULT 'user_initiated',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_companion_convo_user ON companion_conversations(user_id, created_at DESC);
+    `,
+  },
+
+  // ─── Enhancement 38 — Pet Hub ────────────────────────────────────────────────
+  {
+    version: 76,
+    name: 'pet_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS pet_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        species TEXT NOT NULL DEFAULT 'dog',
+        breed TEXT,
+        dob DATE,
+        weight_lbs REAL,
+        microchip_id TEXT,
+        insurance_provider TEXT,
+        vet_name TEXT,
+        vet_phone TEXT,
+        photo_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS pet_health_records (
+        id TEXT PRIMARY KEY,
+        pet_id TEXT NOT NULL,
+        record_type TEXT NOT NULL DEFAULT 'checkup',
+        title TEXT NOT NULL,
+        notes TEXT,
+        date DATE NOT NULL,
+        next_due_date DATE,
+        document_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (pet_id) REFERENCES pet_profiles(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS pet_weight_logs (
+        id TEXT PRIMARY KEY,
+        pet_id TEXT NOT NULL,
+        weight_lbs REAL NOT NULL,
+        logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (pet_id) REFERENCES pet_profiles(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_pet_profiles_user ON pet_profiles(user_id);
+      CREATE INDEX IF NOT EXISTS idx_pet_records_pet ON pet_health_records(pet_id, date DESC);
+      CREATE INDEX IF NOT EXISTS idx_pet_records_due ON pet_health_records(next_due_date) WHERE next_due_date IS NOT NULL;
+    `,
+  },
+
+  // ─── Enhancement 39 — AI Sleep Coach ────────────────────────────────────────
+  {
+    version: 77,
+    name: 'sleep_coach',
+    sql: `
+      CREATE TABLE IF NOT EXISTS sleep_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date DATE NOT NULL,
+        total_minutes INT,
+        deep_minutes INT,
+        rem_minutes INT,
+        light_minutes INT,
+        awake_minutes INT,
+        hrv_avg REAL,
+        resting_hr REAL,
+        sleep_score INT,
+        source TEXT NOT NULL DEFAULT 'manual',
+        stages_json JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS sleep_environment_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date DATE NOT NULL,
+        room_temp_f REAL,
+        alcohol_drinks INT,
+        caffeine_mg INT,
+        screen_time_min INT,
+        stress_level INT,
+        notes TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_sleep_logs_user ON sleep_logs(user_id, date DESC);
+    `,
+  },
+
+  // ─── Enhancement 40 — Consumer Legal Hub ────────────────────────────────────
+  {
+    version: 78,
+    name: 'legal_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS legal_documents (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        document_name TEXT NOT NULL,
+        document_type TEXT NOT NULL DEFAULT 'contract',
+        s3_url TEXT,
+        ai_summary TEXT,
+        risk_flags JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS legal_chat_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        session_type TEXT NOT NULL DEFAULT 'know_your_rights',
+        messages JSONB NOT NULL DEFAULT '[]',
+        output_document_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS legal_disclaimer_acks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        version TEXT NOT NULL DEFAULT 'PSAI-LEGAL-DISC-v1.0',
+        acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_legal_docs_user ON legal_documents(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_legal_sessions_user ON legal_chat_sessions(user_id, created_at DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

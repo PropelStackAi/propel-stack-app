@@ -38,6 +38,11 @@ import { groceryRouter }          from './routes/grocery.js';           // Enhan
 import { careerRouter }           from './routes/career.js';            // Enhancement 33
 import { predictionsRouter }      from './routes/predictions.js';       // Enhancement 34
 import { advisorPlatformRouter }  from './routes/advisorPlatform.js';   // Enhancement 35
+import { digitalTwinRouter }      from './routes/digitalTwin.js';        // Enhancement 36
+import { companionRouter }        from './routes/companion.js';           // Enhancement 37
+import { petHubRouter }           from './routes/petHub.js';              // Enhancement 38
+import { sleepCoachRouter }       from './routes/sleepCoach.js';          // Enhancement 39
+import { legalHubRouter }         from './routes/legalHub.js';            // Enhancement 40
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -114,7 +119,12 @@ app.use('/api/travel',           travelRouter);           // Enhancement 31
 app.use('/api/grocery',          groceryRouter);          // Enhancement 32
 app.use('/api/career',           careerRouter);           // Enhancement 33
 app.use('/api/predictions',      predictionsRouter);      // Enhancement 34
-app.use('/api/advisor',          advisorPlatformRouter);  // Enhancement 35 -- Estate Vault
+app.use('/api/advisor',          advisorPlatformRouter);  // Enhancement 35
+app.use('/api/twin',             digitalTwinRouter);      // Enhancement 36 -- AI Digital Twin
+app.use('/api/companion',        companionRouter);         // Enhancement 37 -- AI Companion Mode
+app.use('/api/pets',             petHubRouter);            // Enhancement 38 -- Pet Hub
+app.use('/api/sleep',            sleepCoachRouter);        // Enhancement 39 -- AI Sleep Coach
+app.use('/api/legal',            legalHubRouter);          // Enhancement 40 -- Consumer Legal Hub
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

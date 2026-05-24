@@ -43,6 +43,11 @@ import { GroceryHub }       from './pages/GroceryHub';           // Enhancement 
 import { CareerHub }        from './pages/CareerHub';            // Enhancement 33
 import { PredictiveInsights } from './pages/PredictiveInsights'; // Enhancement 34
 import { AdvisorPlatform }  from './pages/AdvisorPlatform';      // Enhancement 35
+import { DigitalTwin }     from './pages/DigitalTwin';           // Enhancement 36
+import { CompanionMode }   from './pages/CompanionMode';         // Enhancement 37
+import { PetHub }          from './pages/PetHub';                // Enhancement 38
+import { SleepCoach }      from './pages/SleepCoach';            // Enhancement 39
+import { LegalHub }        from './pages/LegalHub';              // Enhancement 40
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -104,6 +109,11 @@ export function App() {
               <Route path="/career"           component={CareerHub} />
               <Route path="/insights"         component={PredictiveInsights} />
               <Route path="/advisor"          component={AdvisorPlatform} />
+              <Route path="/digital-twin"    component={DigitalTwin} />
+              <Route path="/companion"       component={CompanionMode} />
+              <Route path="/pets"            component={PetHub} />
+              <Route path="/sleep"           component={SleepCoach} />
+              <Route path="/legal"           component={LegalHub} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>
