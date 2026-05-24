@@ -17,6 +17,9 @@ const JWT_SECRET = process.env.JWT_SECRET ?? '';
 if (!PEPPER && process.env.NODE_ENV === 'production') {
   console.error('[encryption] ENCRYPTION_PEPPER env var is not set — field encryption will fail in production');
 }
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('[encryption] JWT_SECRET env var is not set — encryption keys will be identical for all users');
+}
 
 /**
  * Encrypt a plaintext string for a specific user.

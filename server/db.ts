@@ -2426,7 +2426,7 @@ export async function runMigrations(): Promise<void> {
 
   const { rows } = await pool.query('SELECT MAX(version) AS v FROM _migrations');
   const applied = Number(rows[0]?.v ?? 0);
-  const pending = MIGRATIONS.filter((m) => m.version > applied);
+  const pending = MIGRATIONS.filter((m) => m.version > applied).sort((a, b) => a.version - b.version);
   if (pending.length === 0) return;
 
   for (const migration of pending) {

@@ -93,7 +93,7 @@ export function App() {
               <Route path="/inbox" component={InboxIntelligence} />
               <Route path="/awareness" component={SituationAwareness} />
               <Route path="/life-events" component={LifeEvents} />
-              <Route path="/travel" component={TravelMode} />
+              <Route path="/travel-classic" component={TravelMode} />
               <Route path="/network" component={FamilyNetwork} />
               <Route path="/apps" component={AppIntegrations} />
               <Route path="/profiles" component={ProfileSelect} />
