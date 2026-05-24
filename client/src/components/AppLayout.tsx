@@ -1,73 +1,16 @@
+/**
+ * App Shell — Propel Stack AI, LLC
+ *
+ * Desktop: dark grouped-collapsible sidebar (220px) + main content area.
+ * Mobile:  full-width content + fixed bottom tab bar + HubSheet overlay.
+ */
 import { type ReactNode } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
 import { QuickCapture } from '../features/dashboard/components/QuickCapture';
-import { useUnreadCount } from '../features/notifications/api';
-
-interface NavItem {
-  href: string;
-  label: string;
-  short: string;
-  accent: 'indigo' | 'coral' | 'teal' | 'purple';
-  /** If set, item is only shown when the user is on one of these plan tiers. */
-  planRequired?: string[];
-}
-
-const NAV: NavItem[] = [
-  { href: '/',             label: 'Dashboard',       short: 'Home',     accent: 'indigo' },
-  { href: '/contacts',     label: 'Contacts',        short: 'CRM',      accent: 'indigo' },
-  { href: '/assistant',    label: 'AI Assistant',    short: 'AI',       accent: 'coral'  },
-  { href: '/financial',    label: 'Financial Hub',   short: 'Money',    accent: 'indigo' },
-  { href: '/documents',    label: 'Document Vault',  short: 'Vault',    accent: 'indigo' },
-  { href: '/health',       label: 'Health Hub',      short: 'Health',   accent: 'coral'  },
-  { href: '/athlete',      label: 'Athlete Hub',     short: 'Athlete',  accent: 'teal'   },
-  { href: '/social',       label: 'Social & Media',  short: 'Social',   accent: 'teal'   },
-  { href: '/recap',        label: 'Weekly Recap',    short: 'Recap',    accent: 'teal'   },
-  { href: '/streaks',      label: 'Streaks & Wins',  short: 'Streaks',  accent: 'coral'  },
-  { href: '/special-needs',label: 'Family Support',  short: 'SNFS',     accent: 'purple' },
-  // Parental Controls + Kids Zone: Family plan and above only
-  { href: '/parental',     label: 'Parental',        short: 'Parental', accent: 'purple', planRequired: ['family', 'network', 'elite'] },
-  { href: '/kids',         label: 'Kids Zone',       short: 'Kids',     accent: 'teal',   planRequired: ['family', 'network', 'elite'] },
-  { href: '/student',      label: 'Student Mode',    short: 'Student',  accent: 'coral'  },
-  { href: '/business',       label: 'Business Hub',       short: 'Business', accent: 'teal'   },
-  { href: '/notifications',    label: 'Notifications',      short: 'Alerts',   accent: 'coral'  },
-  { href: '/personal-finance', label: 'Personal Finance',   short: 'Finance',  accent: 'indigo' },
-  { href: '/relationships',    label: 'Relationships',      short: 'People',   accent: 'teal'   },
-  { href: '/learning',         label: 'Learning Hub',       short: 'Learning', accent: 'indigo' },
-  { href: '/home-property',    label: 'Home & Property',    short: 'Property', accent: 'teal'   },
-  { href: '/coach',            label: 'AI Life Coach',      short: 'Coach',    accent: 'indigo' },
-  { href: '/settings/privacy',  label: 'Privacy & Security',  short: 'Privacy',   accent: 'purple' },
-  { href: '/credential-bridge', label: 'App Connections',    short: 'Bridge',    accent: 'teal'   },
-  { href: '/agent',             label: 'AI Agent',           short: 'Agent',     accent: 'coral'  },
-  { href: '/voice',             label: 'Voice Mode',         short: 'Voice',     accent: 'indigo' },
-  { href: '/timeline',          label: 'Life Timeline',      short: 'Timeline',  accent: 'purple' },
-  { href: '/estate',            label: 'Estate Vault',       short: 'Estate',    accent: 'indigo' },
-  { href: '/travel',            label: 'Travel Hub',         short: 'Travel',    accent: 'teal'   },
-  { href: '/grocery',           label: 'Grocery & Meals',    short: 'Grocery',   accent: 'coral'  },
-  { href: '/career',            label: 'Career Hub',         short: 'Career',    accent: 'indigo' },
-  { href: '/insights',          label: 'Life Insights',      short: 'Insights',  accent: 'purple' },
-  { href: '/advisor',           label: 'Advisor Platform',   short: 'Advisor',   accent: 'teal'   },
-  { href: '/digital-twin',      label: 'Digital Twin',       short: 'Twin',      accent: 'purple' },
-  { href: '/companion',         label: 'AI Companion',       short: 'Companion', accent: 'coral'  },
-  { href: '/pets',              label: 'Pet Hub',            short: 'Pets',      accent: 'teal'   },
-  { href: '/sleep',             label: 'Sleep Coach',        short: 'Sleep',     accent: 'indigo' },
-  { href: '/legal',             label: 'Legal Hub',          short: 'Legal',     accent: 'purple' },
-  { href: '/circles',          label: 'Accountability Circles', short: 'Circles',   accent: 'coral'  },
-  { href: '/bills',            label: 'Bill Negotiation',    short: 'Bills',     accent: 'teal'   },
-  { href: '/widgets',          label: 'Widget Settings',     short: 'Widgets',   accent: 'indigo' },
-  { href: '/calendar',         label: 'Calendar Hub',        short: 'Calendar',  accent: 'purple' },
-  { href: '/financial-score',  label: 'Financial Score',     short: 'Fin Score', accent: 'teal'   },
-  // ---- Upgraded legacy hubs ----
-  { href: '/family',           label: 'Family Hub',          short: 'Family',    accent: 'coral'  },
-  { href: '/kitchen',          label: 'Kitchen & Pantry',    short: 'Kitchen',   accent: 'teal'   },
-  { href: '/inbox',            label: 'Smart Inbox',         short: 'Inbox',     accent: 'indigo' },
-  { href: '/awareness',        label: 'Mindfulness',         short: 'Mindful',   accent: 'purple' },
-  { href: '/life-events',      label: 'Life Events',         short: 'Milestones',accent: 'purple' },
-  { href: '/network',          label: 'Network Hub',         short: 'Network',   accent: 'indigo' },
-  { href: '/apps',             label: 'Connected Apps',      short: 'Apps',      accent: 'coral'  },
-  { href: '/profiles',         label: 'Profile & Settings',  short: 'Settings',  accent: 'indigo' },
-];
+import { Sidebar } from './Sidebar';
+import { MobileNav } from './MobileNav';
 
 interface User {
   id: string;
@@ -77,164 +20,9 @@ interface User {
   ai_tokens_used_this_month: number;
 }
 
-export function AppLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
-
-  const { data: user } = useQuery({
-    queryKey: ['me'],
-    queryFn: () => apiRequest<User>('/api/me'),
-  });
-
-  return (
-    <div className="min-h-screen flex flex-col bg-surface">
-      {/* Skip link: focuses main without changing the hash (so it doesn't break hash routing). */}
-      <a
-        href="#main-content"
-        onClick={(e) => {
-          e.preventDefault();
-          document.getElementById('main-content')?.focus();
-        }}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-brand-indigo focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
-      >
-        Skip to content
-      </a>
-      <Header user={user} />
-      <div className="flex-1 flex">
-        <Sidebar currentPath={location} planTier={user?.plan_tier} />
-        <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 px-6 py-8 lg:px-10 outline-none">
-          <div className="mx-auto max-w-6xl">{children}</div>
-        </main>
-      </div>
-      <EmergencyButton />
-      <QuickCapture />
-    </div>
-  );
-}
-
-function BellIcon({ count }: { count: number }) {
-  return (
-    <Link href="/notifications" className="relative flex-shrink-0" aria-label={`Notifications${count > 0 ? ` (${count} unread)` : ''}`}>
-      <span className="text-xl select-none">🔔</span>
-      {count > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-brand-coral text-white text-[9px] font-bold grid place-items-center">
-          {count > 9 ? '9+' : count}
-        </span>
-      )}
-    </Link>
-  );
-}
-
-function Header({ user }: { user?: User }) {
-  const { data: unreadData } = useUnreadCount();
-  const unread = unreadData?.count ?? 0;
-
-  return (
-    <header className="sticky top-0 z-30 border-b border-surface-ink/[0.06] bg-surface-raised/80 backdrop-blur">
-      <div className="flex items-center justify-between px-6 py-3 lg:px-10">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Propel Stack AI home">
-          <Logo />
-          <div className="leading-tight">
-            <div className="font-display font-extrabold text-[17px] text-surface-ink">
-              Propel Stack AI
-            </div>
-            <div className="text-[11px] text-surface-muted tracking-wide uppercase font-semibold">
-              Life OS
-            </div>
-          </div>
-        </Link>
-        {user && (
-          <div className="flex items-center gap-3">
-            <BellIcon count={unread} />
-            <span className="hidden sm:inline chip text-surface-muted">
-              <span className="capitalize">{user.plan_tier}</span> plan
-            </span>
-            <div
-              className="w-9 h-9 rounded-full bg-brand-indigo text-white grid place-items-center font-semibold text-sm"
-              aria-label={`Signed in as ${user.display_name}`}
-            >
-              {user.display_name.slice(0, 1).toUpperCase()}
-            </div>
-          </div>
-        )}
-      </div>
-    </header>
-  );
-}
-
-function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: string }) {
-  const visibleNav = NAV.filter(
-    (item) => !item.planRequired || (planTier && item.planRequired.includes(planTier)),
-  );
-
-  return (
-    <nav
-      className="hidden lg:block w-60 shrink-0 border-r border-surface-ink/[0.06] bg-surface-raised/40 px-3 py-6"
-      aria-label="Primary"
-    >
-      <ul className="space-y-0.5">
-        {visibleNav.map((item) => {
-          const active =
-            item.href === '/' ? currentPath === '/' : currentPath.startsWith(item.href);
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={[
-                  'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
-                  active
-                    ? 'bg-brand-indigo/10 text-brand-indigo font-semibold'
-                    : 'text-surface-ink/80 hover:bg-surface-sunk font-medium',
-                ].join(' ')}
-              >
-                <AccentDot accent={item.accent} active={active} />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-      {planTier && ['family', 'network', 'elite'].includes(planTier) && (
-        <div className="mt-4 px-3">
-          <div className="rounded-lg bg-brand-purple/10 px-3 py-2 text-xs text-brand-purple font-semibold">
-            👨‍👩‍👧 Family features active
-          </div>
-        </div>
-      )}
-      <div className="mt-6 px-3 text-[10px] uppercase tracking-wider text-surface-muted font-semibold">
-        Build status
-      </div>
-      <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancements 26–46 live. All 8 legacy hubs upgraded. Full feature set active.
-      </div>
-    </nav>
-  );
-}
-
-function AccentDot({
-  accent,
-  active,
-}: {
-  accent: 'indigo' | 'coral' | 'teal' | 'purple';
-  active: boolean;
-}) {
-  const colorClass = {
-    indigo: 'bg-brand-indigo',
-    coral:  'bg-brand-coral',
-    teal:   'bg-brand-teal',
-    purple: 'bg-brand-purple',
-  }[accent];
-  return (
-    <span
-      aria-hidden
-      className={`inline-block w-1.5 h-1.5 rounded-full ${colorClass} ${active ? 'opacity-100' : 'opacity-50'}`}
-    />
-  );
-}
-
 function Logo() {
-  // Geometric mark in the four brand colors
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <rect x="2"  y="2"  width="13" height="13" rx="3.5" fill="#4F35C2" />
       <rect x="17" y="2"  width="13" height="13" rx="3.5" fill="#F05A28" />
       <rect x="2"  y="17" width="13" height="13" rx="3.5" fill="#01696F" />
@@ -243,15 +31,70 @@ function Logo() {
   );
 }
 
-function EmergencyButton() {
-  // Persistent emergency entry point. Full implementation lands in Session 10.
+function MobileHeader({ user }: { user?: User }) {
   return (
-    <Link
-      href="/emergency"
-      className="fixed bottom-5 left-5 z-40 rounded-full bg-red-600 text-white px-4 py-2.5 text-sm font-semibold shadow-raised hover:bg-red-700 transition-colors"
-      aria-label="Open Emergency Mode"
+    <header
+      className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 py-3"
+      style={{ background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
     >
-      Emergency
-    </Link>
+      <Link href="/" className="flex items-center gap-2" aria-label="Propel Stack AI home">
+        <Logo />
+        <span className="font-display font-extrabold text-[16px] text-surface-ink">Propel Stack AI</span>
+      </Link>
+      {user && (
+        <div
+          className="w-8 h-8 rounded-full bg-brand-indigo text-white grid place-items-center font-semibold text-sm"
+          aria-label={`Signed in as ${user.display_name}`}
+        >
+          {user.display_name.slice(0, 1).toUpperCase()}
+        </div>
+      )}
+    </header>
+  );
+}
+
+export function AppLayout({ children }: { children: ReactNode }) {
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => apiRequest<User>('/api/me'),
+  });
+
+  return (
+    <div className="min-h-screen flex bg-surface">
+      {/* Skip link */}
+      <a
+        href="#main-content"
+        onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-brand-indigo focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
+
+      {/* Desktop Sidebar */}
+      <Sidebar Logo={Logo} />
+
+      {/* Right side: mobile header + content + mobile nav */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar (hidden on desktop) */}
+        <MobileHeader user={user} />
+
+        {/* Main content */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 min-w-0 px-5 py-6 lg:px-8 lg:py-8 outline-none"
+          // Extra bottom padding on mobile so content isn't hidden behind tab bar
+          style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom) + 1.5rem)' }}
+        >
+          <div className="mx-auto max-w-5xl">{children}</div>
+        </main>
+      </div>
+
+      {/* Mobile bottom tab bar + HubSheet (hidden on desktop via lg:hidden inside component) */}
+      <MobileNav />
+
+      {/* Quick capture (floating, all breakpoints) */}
+      <QuickCapture />
+    </div>
   );
 }
