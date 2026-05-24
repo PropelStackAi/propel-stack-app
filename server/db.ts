@@ -1043,6 +1043,88 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_life_wins_user ON life_wins(user_id, occurred_on DESC);
     `,
   },
+  // ─── Session 14 Bug Fix — Student Mode ────────────────────────────────────────
+  {
+    version: 52,
+    name: 'student_mode',
+    sql: `
+      CREATE TABLE IF NOT EXISTS student_courses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        code TEXT NOT NULL DEFAULT '',
+        instructor TEXT NOT NULL DEFAULT '',
+        credits INTEGER NOT NULL DEFAULT 3,
+        status TEXT NOT NULL DEFAULT 'active',
+        grade TEXT NOT NULL DEFAULT '',
+        color TEXT NOT NULL DEFAULT '#4F35C2',
+        notes TEXT NOT NULL DEFAULT '',
+        start_date TEXT,
+        end_date TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_courses_user ON student_courses(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS flashcard_decks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        subject TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_decks_user ON flashcard_decks(user_id);
+
+      CREATE TABLE IF NOT EXISTS flashcards (
+        id TEXT PRIMARY KEY,
+        deck_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        front TEXT NOT NULL,
+        back TEXT NOT NULL,
+        ease_factor REAL NOT NULL DEFAULT 2.5,
+        interval_days INTEGER NOT NULL DEFAULT 0,
+        repetitions INTEGER NOT NULL DEFAULT 0,
+        next_due TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (deck_id) REFERENCES flashcard_decks(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_cards_deck ON flashcards(deck_id, next_due);
+      CREATE INDEX IF NOT EXISTS idx_cards_due ON flashcards(user_id, next_due);
+
+      CREATE TABLE IF NOT EXISTS student_notes (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT '',
+        content TEXT NOT NULL DEFAULT '',
+        doc_type TEXT NOT NULL DEFAULT 'notes',
+        course_id TEXT,
+        word_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_student_notes_user ON student_notes(user_id, updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS student_resources (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL DEFAULT '',
+        authors TEXT NOT NULL DEFAULT '',
+        year TEXT NOT NULL DEFAULT '',
+        summary TEXT NOT NULL DEFAULT '',
+        tags TEXT NOT NULL DEFAULT '[]',
+        source_type TEXT NOT NULL DEFAULT 'article',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_resources_user ON student_resources(user_id, created_at DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

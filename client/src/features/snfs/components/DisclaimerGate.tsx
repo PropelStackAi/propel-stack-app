@@ -33,9 +33,11 @@ export function DisclaimerGate({ onAgreed }: { onAgreed: () => void }): JSX.Elem
   }, []);
 
   function handleAgree() {
-    acknowledge.mutate(undefined, {
-      onSuccess: () => onAgreed(),
-    });
+    // Call onAgreed() immediately — the user has read and agreed.
+    // Fire the server save in the background; if it fails we still let them through
+    // (degraded mode) to avoid permanently blocking access.
+    onAgreed();
+    acknowledge.mutate(undefined);
   }
 
   return (
@@ -93,6 +95,7 @@ export function DisclaimerGate({ onAgreed }: { onAgreed: () => void }): JSX.Elem
             </p>
           )}
           <button
+            type="button"
             onClick={handleAgree}
             disabled={!scrolledToBottom || acknowledge.isPending}
             className={[

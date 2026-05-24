@@ -17,6 +17,7 @@ import { athleteRouter } from './routes/athlete.js';
 import { socialRouter } from './routes/social.js';
 import { recapRouter } from './routes/recap.js';
 import { streaksRouter, lifeWinsRouter } from './routes/streaks.js';
+import { studentRouter } from './routes/student.js';
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -70,6 +71,7 @@ app.use('/api/social', socialRouter);                 // Session 14 -- Social & 
 app.use('/api/recap', recapRouter);                   // Session 15 -- AI Weekly Life Recap
 app.use('/api/streaks', streaksRouter);               // Session 16 -- Streaks & Life Wins
 app.use('/api/life-wins', lifeWinsRouter);            // Session 16 -- Life Wins Feed
+app.use('/api/student', studentRouter);               // Session 14 Bug Fix -- Student Mode
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

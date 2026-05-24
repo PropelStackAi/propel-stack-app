@@ -150,7 +150,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Session 16 — Streaks &amp; Life Wins.
+        Session 16 — Streaks &amp; Life Wins + Bug Fixes.
       </div>
     </nav>
   );
