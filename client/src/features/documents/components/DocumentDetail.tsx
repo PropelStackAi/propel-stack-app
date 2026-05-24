@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useDeleteDocument, useDocument, useShareDocument, useSummarize, useUpdateDocument } from '../api';
 import { DOCUMENT_CATEGORIES, dataUrl, fileKind, humanSize, type DocumentCategory } from '../types';
+import { useAnalyzeDocument, usePendingExtractions } from '../../docIntelligence/api';
+import { DOC_TYPE_META } from '../../docIntelligence/types';
 
 const inputCls = 'w-full rounded-lg border border-surface-ink/10 bg-surface-raised px-3 py-2 text-sm focus:outline-none';
 
@@ -10,6 +12,8 @@ export function DocumentDetail({ id, onClose, onDeleted }: { id: string; onClose
   const del = useDeleteDocument();
   const summarize = useSummarize(id);
   const share = useShareDocument(id);
+  const analyze = useAnalyzeDocument();
+  const { data: pending = [] } = usePendingExtractions();
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<DocumentCategory>('Other');
@@ -92,6 +96,54 @@ export function DocumentDetail({ id, onClose, onDeleted }: { id: string; onClose
               {doc.aiSummary ? <p className="text-sm text-surface-ink mt-2">{doc.aiSummary}</p> : <p className="text-sm text-surface-muted mt-2">No summary yet.</p>}
               {summarize.data?.stub && <p className="text-[11px] text-surface-muted mt-1">Demo summary — real PDF analysis arrives with provider wiring.</p>}
             </div>
+
+            {/* Smart Document Intelligence */}
+            {(() => {
+              const existing = pending.find((e) => e.vaultFileId === id);
+              const extractionDone = existing && (existing.confirmedAt || existing.dismissedAt);
+              return (
+                <div className="card mt-4 bg-surface-sunk/40">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <h3 className="font-display font-bold text-sm text-surface-ink">✨ Smart Extraction</h3>
+                      <p className="text-xs text-surface-muted mt-0.5">
+                        AI reads the document, extracts key fields, and populates the right hub.
+                      </p>
+                    </div>
+                    {!existing && (
+                      <button
+                        type="button"
+                        onClick={() => analyze.mutate(id)}
+                        disabled={analyze.isPending}
+                        className="btn-secondary !py-1.5 !text-xs flex-shrink-0"
+                      >
+                        {analyze.isPending ? 'Analyzing…' : 'Extract with AI'}
+                      </button>
+                    )}
+                  </div>
+                  {analyze.isSuccess && !existing && (
+                    <p className="text-xs text-green-600 mt-2">✓ Extraction complete — review it in the panel above the document list.</p>
+                  )}
+                  {analyze.isError && (
+                    <p className="text-xs text-red-500 mt-2">Extraction failed. Please try again.</p>
+                  )}
+                  {existing && !extractionDone && (
+                    <div className="mt-2 rounded-lg bg-brand-indigo/[0.06] px-3 py-2">
+                      <p className="text-xs text-brand-indigo font-semibold">
+                        {DOC_TYPE_META[existing.docType].emoji} {DOC_TYPE_META[existing.docType].label} extraction pending review
+                      </p>
+                      <p className="text-[10px] text-surface-muted mt-0.5">Confirm or dismiss in the review panel at the top of the vault.</p>
+                    </div>
+                  )}
+                  {existing && existing.confirmedAt && (
+                    <p className="text-xs text-green-600 mt-2">✓ Data extracted and saved to {DOC_TYPE_META[existing.docType].hub}.</p>
+                  )}
+                  <p className="text-[10px] text-surface-muted mt-3">
+                    🔒 Account numbers and SSNs are masked before AI analysis. Nothing is saved until you confirm.
+                  </p>
+                </div>
+              );
+            })()}
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <a href={dataUrl(doc)} download={doc.fileName} className="btn-secondary !py-1.5 !text-xs">Download</a>

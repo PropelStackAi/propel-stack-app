@@ -1555,6 +1555,28 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 23 — Smart Document Intelligence ────────────────────────────
+  {
+    version: 60,
+    name: 'doc_extractions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS doc_extractions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        vault_file_id TEXT NOT NULL,
+        doc_type TEXT NOT NULL,
+        extracted_json TEXT NOT NULL DEFAULT '{}',
+        confidence REAL NOT NULL DEFAULT 0.0,
+        confirmed_at TIMESTAMPTZ,
+        dismissed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_doc_extractions_user ON doc_extractions(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_doc_extractions_vault ON doc_extractions(vault_file_id);
+    `,
+  },
+
   // ─── Enhancement 22 — AI Life Coach Mode ─────────────────────────────────────
   {
     version: 59,

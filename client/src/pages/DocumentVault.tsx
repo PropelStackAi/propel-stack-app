@@ -4,6 +4,7 @@ import { DocumentCard } from '../features/documents/components/DocumentCard';
 import { DocumentDetail } from '../features/documents/components/DocumentDetail';
 import { Uploader } from '../features/documents/components/Uploader';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../features/documents/types';
+import { PendingExtractionsPanel } from '../features/docIntelligence/components/PendingExtractionsPanel';
 
 const ALL = 'All' as const;
 type Filter = typeof ALL | DocumentCategory;
@@ -31,6 +32,8 @@ export function DocumentVault() {
       </div>
 
       <Uploader />
+
+      <PendingExtractionsPanel />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <input

@@ -25,6 +25,7 @@ import { relationshipsRouter } from './routes/relationships.js';
 import { learningRouter }       from './routes/learning.js';
 import { homePropertyRouter }   from './routes/homeProperty.js';
 import { coachingRouter }        from './routes/coaching.js';
+import { docIntelligenceRouter } from './routes/docIntelligence.js';
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -86,6 +87,7 @@ app.use('/api/relationships', relationshipsRouter);      // Enhancement 19 -- Re
 app.use('/api/learning',       learningRouter);          // Enhancement 20 -- Learning Hub
 app.use('/api/home-property',  homePropertyRouter);      // Enhancement 21 -- Home & Property Hub
 app.use('/api/coaching',       coachingRouter);          // Enhancement 22 -- AI Life Coach Mode
+app.use('/api/doc-intelligence', docIntelligenceRouter); // Enhancement 23 -- Smart Document Intelligence
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
