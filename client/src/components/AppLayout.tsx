@@ -43,6 +43,11 @@ const NAV: NavItem[] = [
   { href: '/voice',             label: 'Voice Mode',         short: 'Voice',     accent: 'indigo' },
   { href: '/timeline',          label: 'Life Timeline',      short: 'Timeline',  accent: 'purple' },
   { href: '/estate',            label: 'Estate Vault',       short: 'Estate',    accent: 'indigo' },
+  { href: '/travel',            label: 'Travel Hub',         short: 'Travel',    accent: 'teal'   },
+  { href: '/grocery',           label: 'Grocery & Meals',    short: 'Grocery',   accent: 'coral'  },
+  { href: '/career',            label: 'Career Hub',         short: 'Career',    accent: 'indigo' },
+  { href: '/insights',          label: 'Life Insights',      short: 'Insights',  accent: 'purple' },
+  { href: '/advisor',           label: 'Advisor Platform',   short: 'Advisor',   accent: 'teal'   },
 ];
 
 interface User {
@@ -180,7 +185,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancements 26–30 live. Credential Bridge, AI Agent, Voice Mode, Life Timeline, Estate Vault.
+        Enhancements 26–35 live. Security, Credential Bridge, AI Agent, Voice, Timeline, Estate, Travel, Grocery, Career, Insights, Advisor.
       </div>
     </nav>
   );

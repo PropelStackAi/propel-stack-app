@@ -38,6 +38,11 @@ import { AgentTasks }       from './pages/AgentTasks';           // Enhancement 
 import { VoiceMode }        from './pages/VoiceMode';            // Enhancement 28
 import { LifeTimeline }     from './pages/LifeTimeline';         // Enhancement 29
 import { EstateVault }      from './pages/EstateVault';          // Enhancement 30
+import { TravelHub }        from './pages/TravelHub';            // Enhancement 31
+import { GroceryHub }       from './pages/GroceryHub';           // Enhancement 32
+import { CareerHub }        from './pages/CareerHub';            // Enhancement 33
+import { PredictiveInsights } from './pages/PredictiveInsights'; // Enhancement 34
+import { AdvisorPlatform }  from './pages/AdvisorPlatform';      // Enhancement 35
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -94,6 +99,11 @@ export function App() {
               <Route path="/voice"             component={VoiceMode} />
               <Route path="/timeline"          component={LifeTimeline} />
               <Route path="/estate"            component={EstateVault} />
+              <Route path="/travel"           component={TravelHub} />
+              <Route path="/grocery"          component={GroceryHub} />
+              <Route path="/career"           component={CareerHub} />
+              <Route path="/insights"         component={PredictiveInsights} />
+              <Route path="/advisor"          component={AdvisorPlatform} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

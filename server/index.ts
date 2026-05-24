@@ -33,6 +33,11 @@ import { agentTasksRouter }       from './routes/agentTasks.js';       // Enhanc
 import { voiceAIRouter }          from './routes/voiceAI.js';          // Enhancement 28
 import { timelineRouter }         from './routes/timeline.js';         // Enhancement 29
 import { estateVaultRouter }      from './routes/estateVault.js';      // Enhancement 30
+import { travelRouter }           from './routes/travel.js';            // Enhancement 31
+import { groceryRouter }          from './routes/grocery.js';           // Enhancement 32
+import { careerRouter }           from './routes/career.js';            // Enhancement 33
+import { predictionsRouter }      from './routes/predictions.js';       // Enhancement 34
+import { advisorPlatformRouter }  from './routes/advisorPlatform.js';   // Enhancement 35
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -104,7 +109,12 @@ app.use('/api/credential-bridge', credentialBridgeRouter); // Enhancement 26 -- 
 app.use('/api/agent-tasks',       agentTasksRouter);       // Enhancement 27 -- AI Agent Tasks
 app.use('/api/voice',             voiceAIRouter);          // Enhancement 28 -- Voice AI
 app.use('/api/timeline',          timelineRouter);         // Enhancement 29 -- Life Timeline
-app.use('/api/estate-vault',      estateVaultRouter);      // Enhancement 30 -- Estate Vault
+app.use('/api/estate-vault',      estateVaultRouter);      // Enhancement 30
+app.use('/api/travel',           travelRouter);           // Enhancement 31
+app.use('/api/grocery',          groceryRouter);          // Enhancement 32
+app.use('/api/career',           careerRouter);           // Enhancement 33
+app.use('/api/predictions',      predictionsRouter);      // Enhancement 34
+app.use('/api/advisor',          advisorPlatformRouter);  // Enhancement 35 -- Estate Vault
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

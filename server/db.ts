@@ -1660,6 +1660,170 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 31 — Travel & Trip Hub ─────────────────────────────────────
+  {
+    version: 69,
+    name: 'trips',
+    sql: `
+      CREATE TABLE IF NOT EXISTS trips (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        destination TEXT NOT NULL,
+        start_date DATE,
+        end_date DATE,
+        trip_type TEXT NOT NULL DEFAULT 'leisure',
+        travelers JSONB DEFAULT '[]',
+        itinerary JSONB DEFAULT '{}',
+        packing_list JSONB DEFAULT '[]',
+        documents JSONB DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id, start_date DESC);
+    `,
+  },
+
+  // ─── Enhancement 32 — Grocery & Meal Intelligence ────────────────────────────
+  {
+    version: 70,
+    name: 'grocery_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS pantry_items (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT,
+        quantity REAL,
+        unit TEXT,
+        barcode TEXT,
+        expiry_date DATE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_pantry_user ON pantry_items(user_id, category);
+
+      CREATE TABLE IF NOT EXISTS grocery_lists (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        week_start DATE,
+        items JSONB DEFAULT '[]',
+        estimated_total REAL,
+        actual_total REAL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_grocery_user ON grocery_lists(user_id, week_start DESC);
+    `,
+  },
+
+  // ─── Enhancement 33 — Career & Professional Growth Hub ───────────────────────
+  {
+    version: 71,
+    name: 'career_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS career_licenses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        license_name TEXT NOT NULL,
+        license_number TEXT,
+        issuing_body TEXT,
+        issue_date DATE,
+        expiry_date DATE,
+        ce_credits_required INTEGER NOT NULL DEFAULT 0,
+        ce_credits_earned INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_career_licenses_user ON career_licenses(user_id, expiry_date);
+
+      CREATE TABLE IF NOT EXISTS career_jobs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        company TEXT NOT NULL DEFAULT '',
+        role TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'applied',
+        applied_date DATE,
+        notes TEXT,
+        contacts JSONB DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_career_jobs_user ON career_jobs(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS career_ce_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        license_id TEXT NOT NULL,
+        course_name TEXT NOT NULL,
+        provider TEXT,
+        credits REAL NOT NULL DEFAULT 0,
+        completed_date DATE NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (license_id) REFERENCES career_licenses(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_ce_log_license ON career_ce_log(license_id, completed_date DESC);
+    `,
+  },
+
+  // ─── Enhancement 34 — Predictive Life Insights Engine ────────────────────────
+  {
+    version: 72,
+    name: 'life_predictions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS life_predictions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        prediction_type TEXT NOT NULL,
+        prediction_text TEXT NOT NULL,
+        predicted_for_date DATE,
+        confidence_score REAL NOT NULL DEFAULT 0.5,
+        hubs_used JSONB DEFAULT '[]',
+        shown_at TIMESTAMPTZ,
+        acted_on BOOLEAN NOT NULL DEFAULT false,
+        outcome_score_delta REAL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_predictions_user ON life_predictions(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_predictions_shown ON life_predictions(user_id, shown_at) WHERE shown_at IS NULL;
+    `,
+  },
+
+  // ─── Enhancement 35 — White-Label Advisor Platform ───────────────────────────
+  {
+    version: 73,
+    name: 'advisor_platform',
+    sql: `
+      CREATE TABLE IF NOT EXISTS advisor_firms (
+        id TEXT PRIMARY KEY,
+        firm_name TEXT NOT NULL,
+        owner_user_id TEXT NOT NULL,
+        brand_logo_url TEXT,
+        brand_primary_color TEXT DEFAULT '#4F35C2',
+        custom_domain TEXT,
+        plan TEXT NOT NULL DEFAULT 'advisor',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (owner_user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS advisor_clients (
+        id TEXT PRIMARY KEY,
+        firm_id TEXT NOT NULL,
+        client_user_id TEXT NOT NULL,
+        shared_hubs JSONB DEFAULT '[]',
+        advisor_notes TEXT,
+        linked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (firm_id) REFERENCES advisor_firms(id) ON DELETE CASCADE,
+        FOREIGN KEY (client_user_id) REFERENCES users(id),
+        UNIQUE(firm_id, client_user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_advisor_clients_firm ON advisor_clients(firm_id);
+    `,
+  },
+
   // ─── Enhancement 26 — Universal Web App Credential Bridge ──────────────────
   {
     version: 64,
