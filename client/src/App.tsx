@@ -29,7 +29,8 @@ import { ProfileSelect } from './pages/ProfileSelect';
 import { Notifications } from './pages/Notifications';
 import { PersonalFinanceHub } from './pages/PersonalFinanceHub';
 import { RelationshipsHub } from './pages/RelationshipsHub';
-import { LearningHub }      from './pages/LearningHub';
+import { LearningHub }        from './pages/LearningHub';
+import { HomePropertyHub }   from './pages/HomePropertyHub';
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -78,6 +79,7 @@ export function App() {
               <Route path="/personal-finance" component={PersonalFinanceHub} />
               <Route path="/relationships" component={RelationshipsHub} />
               <Route path="/learning"       component={LearningHub} />
+              <Route path="/home-property"  component={HomePropertyHub} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

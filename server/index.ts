@@ -23,6 +23,7 @@ import { notificationsRouter } from './routes/notifications.js';
 import { personalFinanceRouter } from './routes/personalFinance.js';
 import { relationshipsRouter } from './routes/relationships.js';
 import { learningRouter }       from './routes/learning.js';
+import { homePropertyRouter }   from './routes/homeProperty.js';
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -82,6 +83,7 @@ app.use('/api/notifications', notificationsRouter);   // Enhancement 17 -- Smart
 app.use('/api/personal-finance', personalFinanceRouter); // Enhancement 18 -- Personal Finance Hub
 app.use('/api/relationships', relationshipsRouter);      // Enhancement 19 -- Relationships & People Hub
 app.use('/api/learning',       learningRouter);          // Enhancement 20 -- Learning Hub
+app.use('/api/home-property',  homePropertyRouter);      // Enhancement 21 -- Home & Property Hub
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

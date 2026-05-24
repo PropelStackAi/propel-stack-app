@@ -1372,6 +1372,145 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 21 — Home & Property Hub ────────────────────────────────────
+  {
+    version: 58,
+    name: 'home_property_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS properties (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        nickname TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'primary',
+        address TEXT NOT NULL DEFAULT '',
+        purchase_date TEXT,
+        estimated_value INTEGER,
+        mortgage_amount INTEGER,
+        mortgage_rate REAL,
+        rent_amount INTEGER,
+        zillow_url TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_properties_user ON properties(user_id);
+
+      CREATE TABLE IF NOT EXISTS maintenance_tasks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        property_id TEXT NOT NULL,
+        task_name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'general',
+        frequency_days INTEGER NOT NULL DEFAULT 90,
+        last_done TEXT,
+        next_due TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_maintenance_user ON maintenance_tasks(user_id, next_due ASC);
+
+      CREATE TABLE IF NOT EXISTS appliances (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        property_id TEXT,
+        name TEXT NOT NULL,
+        brand TEXT NOT NULL DEFAULT '',
+        model TEXT NOT NULL DEFAULT '',
+        serial_number TEXT NOT NULL DEFAULT '',
+        purchase_date TEXT,
+        warranty_expiry TEXT,
+        purchase_price INTEGER,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_appliances_user ON appliances(user_id, warranty_expiry ASC);
+
+      CREATE TABLE IF NOT EXISTS vehicles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        make TEXT NOT NULL,
+        model TEXT NOT NULL,
+        year INTEGER NOT NULL,
+        color TEXT NOT NULL DEFAULT '',
+        license_plate TEXT NOT NULL DEFAULT '',
+        current_mileage INTEGER NOT NULL DEFAULT 0,
+        registration_renewal TEXT,
+        inspection_due TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_vehicles_user ON vehicles(user_id);
+
+      CREATE TABLE IF NOT EXISTS vehicle_service_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        vehicle_id TEXT NOT NULL,
+        service_type TEXT NOT NULL DEFAULT 'other',
+        service_date TEXT NOT NULL,
+        mileage INTEGER,
+        cost_cents INTEGER,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_service_log_vehicle ON vehicle_service_log(vehicle_id, service_date DESC);
+
+      CREATE TABLE IF NOT EXISTS insurance_policies (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        policy_type TEXT NOT NULL DEFAULT 'home',
+        carrier TEXT NOT NULL,
+        policy_number TEXT NOT NULL DEFAULT '',
+        agent_name TEXT NOT NULL DEFAULT '',
+        agent_contact TEXT NOT NULL DEFAULT '',
+        premium_cents INTEGER,
+        renewal_date TEXT,
+        property_id TEXT,
+        vehicle_id TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_insurance_user ON insurance_policies(user_id, renewal_date ASC);
+
+      CREATE TABLE IF NOT EXISTS utility_bills (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        property_id TEXT,
+        utility_type TEXT NOT NULL DEFAULT 'electric',
+        bill_month TEXT NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_utility_user ON utility_bills(user_id, utility_type, bill_month DESC);
+
+      CREATE TABLE IF NOT EXISTS rental_ledger (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        property_id TEXT NOT NULL,
+        tenant_name TEXT NOT NULL,
+        lease_start TEXT NOT NULL,
+        lease_end TEXT NOT NULL,
+        rent_cents INTEGER NOT NULL,
+        due_day INTEGER NOT NULL DEFAULT 1,
+        security_deposit_cents INTEGER,
+        last_payment_date TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_rental_user ON rental_ledger(user_id);
+    `,
+  },
+
   // ─── Enhancement 20 — Learning Hub ──────────────────────────────────────────
   {
     version: 57,
