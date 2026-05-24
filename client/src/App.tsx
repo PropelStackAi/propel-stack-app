@@ -48,6 +48,11 @@ import { CompanionMode }   from './pages/CompanionMode';         // Enhancement 
 import { PetHub }          from './pages/PetHub';                // Enhancement 38
 import { SleepCoach }      from './pages/SleepCoach';            // Enhancement 39
 import { LegalHub }        from './pages/LegalHub';              // Enhancement 40
+import { AccountabilityCircles } from './pages/AccountabilityCircles'; // Enhancement 42
+import { BillNegotiation }       from './pages/BillNegotiation';       // Enhancement 43
+import { WidgetSettings }        from './pages/WidgetSettings';         // Enhancement 44
+import { CalendarHub }           from './pages/CalendarHub';            // Enhancement 45
+import { FinancialScore }        from './pages/FinancialScore';         // Enhancement 46
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -114,6 +119,11 @@ export function App() {
               <Route path="/pets"            component={PetHub} />
               <Route path="/sleep"           component={SleepCoach} />
               <Route path="/legal"           component={LegalHub} />
+              <Route path="/circles"         component={AccountabilityCircles} />
+              <Route path="/bills"           component={BillNegotiation} />
+              <Route path="/widgets"         component={WidgetSettings} />
+              <Route path="/calendar"        component={CalendarHub} />
+              <Route path="/financial-score" component={FinancialScore} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

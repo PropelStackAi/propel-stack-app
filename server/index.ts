@@ -43,6 +43,11 @@ import { companionRouter }        from './routes/companion.js';           // Enh
 import { petHubRouter }           from './routes/petHub.js';              // Enhancement 38
 import { sleepCoachRouter }       from './routes/sleepCoach.js';          // Enhancement 39
 import { legalHubRouter }         from './routes/legalHub.js';            // Enhancement 40
+import { circlesRouter }          from './routes/circles.js';             // Enhancement 42
+import { billsRouter }            from './routes/bills.js';               // Enhancement 43
+import { widgetsRouter }          from './routes/widgets.js';             // Enhancement 44
+import { calendarHubRouter }      from './routes/calendarHub.js';         // Enhancement 45
+import { financialScoreRouter }   from './routes/financialScore.js';      // Enhancement 46
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -125,6 +130,11 @@ app.use('/api/companion',        companionRouter);         // Enhancement 37 -- 
 app.use('/api/pets',             petHubRouter);            // Enhancement 38 -- Pet Hub
 app.use('/api/sleep',            sleepCoachRouter);        // Enhancement 39 -- AI Sleep Coach
 app.use('/api/legal',            legalHubRouter);          // Enhancement 40 -- Consumer Legal Hub
+app.use('/api/circles',         circlesRouter);            // Enhancement 42 -- Social Circles
+app.use('/api/bills',           billsRouter);              // Enhancement 43 -- Bill Negotiation
+app.use('/api/widgets',         widgetsRouter);            // Enhancement 44 -- Widget Layer
+app.use('/api/calendar',        calendarHubRouter);        // Enhancement 45 -- Calendar Intelligence
+app.use('/api/finance',         financialScoreRouter);     // Enhancement 46 -- Financial Life Score
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

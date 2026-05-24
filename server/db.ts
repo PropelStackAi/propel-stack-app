@@ -2155,6 +2155,241 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 42 — Life Score Social & Accountability Circles ────────────
+  {
+    version: 79,
+    name: 'circles',
+    sql: `
+      CREATE TABLE IF NOT EXISTS circles (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        invite_code TEXT NOT NULL UNIQUE,
+        max_members INT NOT NULL DEFAULT 8,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (created_by) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_circles_invite ON circles(invite_code);
+
+      CREATE TABLE IF NOT EXISTS circle_members (
+        id TEXT PRIMARY KEY,
+        circle_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'member',
+        share_life_score BOOLEAN NOT NULL DEFAULT TRUE,
+        share_streaks BOOLEAN NOT NULL DEFAULT TRUE,
+        share_goal_names BOOLEAN NOT NULL DEFAULT FALSE,
+        joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(circle_id, user_id),
+        FOREIGN KEY (circle_id) REFERENCES circles(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS circle_nudges (
+        id TEXT PRIMARY KEY,
+        circle_id TEXT NOT NULL,
+        from_user_id TEXT NOT NULL,
+        to_user_id TEXT NOT NULL,
+        message TEXT NOT NULL,
+        read BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (circle_id) REFERENCES circles(id) ON DELETE CASCADE,
+        FOREIGN KEY (from_user_id) REFERENCES users(id),
+        FOREIGN KEY (to_user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS circle_challenges (
+        id TEXT PRIMARY KEY,
+        circle_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        challenge_type TEXT NOT NULL DEFAULT 'streak',
+        target_value INT NOT NULL DEFAULT 7,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (circle_id) REFERENCES circles(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS weekly_circle_feed (
+        id TEXT PRIMARY KEY,
+        circle_id TEXT NOT NULL,
+        week_start DATE NOT NULL,
+        encouragement_message TEXT NOT NULL,
+        feed_data JSONB NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(circle_id, week_start),
+        FOREIGN KEY (circle_id) REFERENCES circles(id) ON DELETE CASCADE
+      );
+    `,
+  },
+
+  // ─── Enhancement 43 — Smart Bill Negotiation & Subscription Audit ────────────
+  {
+    version: 80,
+    name: 'bills',
+    sql: `
+      CREATE TABLE IF NOT EXISTS subscription_scans (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        merchant_name TEXT NOT NULL,
+        category TEXT,
+        monthly_amount REAL NOT NULL DEFAULT 0,
+        annual_amount REAL NOT NULL DEFAULT 0,
+        first_detected DATE,
+        last_charged DATE,
+        status TEXT NOT NULL DEFAULT 'active',
+        unused_flag BOOLEAN NOT NULL DEFAULT FALSE,
+        overpaying_flag BOOLEAN NOT NULL DEFAULT FALSE,
+        savings_opportunity REAL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_subs_user ON subscription_scans(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS negotiation_scripts (
+        id TEXT PRIMARY KEY,
+        subscription_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        script_text TEXT NOT NULL,
+        provider_name TEXT NOT NULL,
+        estimated_savings REAL,
+        script_type TEXT NOT NULL DEFAULT 'cancel_threat',
+        used BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (subscription_id) REFERENCES subscription_scans(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS savings_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        subscription_id TEXT,
+        action_type TEXT NOT NULL DEFAULT 'negotiated',
+        monthly_savings REAL NOT NULL DEFAULT 0,
+        annual_savings REAL NOT NULL DEFAULT 0,
+        achieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
+  // ─── Enhancement 44 — Life OS Widget Layer ──────────────────────────────────
+  {
+    version: 81,
+    name: 'widgets',
+    sql: `
+      CREATE TABLE IF NOT EXISTS widget_preferences (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        enabled_widgets JSONB NOT NULL DEFAULT '["life_score","morning_briefing","streaks"]',
+        widget_refresh_hour INT NOT NULL DEFAULT 6,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
+  // ─── Enhancement 45 — Smart Calendar Intelligence ───────────────────────────
+  {
+    version: 82,
+    name: 'calendar',
+    sql: `
+      CREATE TABLE IF NOT EXISTS calendar_connections (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        access_token TEXT,
+        refresh_token TEXT,
+        calendar_id TEXT,
+        last_synced TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, provider),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS calendar_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        provider_event_id TEXT,
+        title TEXT NOT NULL,
+        start_time TIMESTAMPTZ NOT NULL,
+        end_time TIMESTAMPTZ NOT NULL,
+        is_all_day BOOLEAN NOT NULL DEFAULT FALSE,
+        meeting_type TEXT NOT NULL DEFAULT 'meeting',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_cal_events_user ON calendar_events(user_id, start_time);
+
+      CREATE TABLE IF NOT EXISTS schedule_analysis (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        week_start DATE NOT NULL,
+        total_meeting_hours REAL,
+        overload_days JSONB NOT NULL DEFAULT '[]',
+        goal_conflicts JSONB NOT NULL DEFAULT '[]',
+        optimization_suggestions JSONB NOT NULL DEFAULT '[]',
+        goal_alignment_score INT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, week_start),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
+  // ─── Enhancement 46 — Financial Life Score Sub-Engine ───────────────────────
+  {
+    version: 83,
+    name: 'financial_score',
+    sql: `
+      CREATE TABLE IF NOT EXISTS financial_score_history (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        score_date DATE NOT NULL,
+        composite_score INT NOT NULL DEFAULT 0,
+        net_worth_score INT NOT NULL DEFAULT 0,
+        dti_score INT NOT NULL DEFAULT 0,
+        savings_score INT NOT NULL DEFAULT 0,
+        emergency_fund_score INT NOT NULL DEFAULT 0,
+        investment_score INT NOT NULL DEFAULT 0,
+        bill_payment_score INT NOT NULL DEFAULT 0,
+        net_worth REAL,
+        monthly_savings_rate REAL,
+        emergency_fund_months REAL,
+        dti_ratio REAL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, score_date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fin_score_user ON financial_score_history(user_id, score_date DESC);
+
+      CREATE TABLE IF NOT EXISTS financial_assets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        asset_name TEXT NOT NULL,
+        asset_type TEXT NOT NULL DEFAULT 'other',
+        current_value REAL NOT NULL DEFAULT 0,
+        source TEXT NOT NULL DEFAULT 'manual',
+        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS financial_liabilities (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        liability_name TEXT NOT NULL,
+        liability_type TEXT NOT NULL DEFAULT 'other',
+        balance REAL NOT NULL DEFAULT 0,
+        monthly_payment REAL,
+        interest_rate REAL,
+        source TEXT NOT NULL DEFAULT 'manual',
+        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

@@ -53,6 +53,11 @@ const NAV: NavItem[] = [
   { href: '/pets',              label: 'Pet Hub',            short: 'Pets',      accent: 'teal'   },
   { href: '/sleep',             label: 'Sleep Coach',        short: 'Sleep',     accent: 'indigo' },
   { href: '/legal',             label: 'Legal Hub',          short: 'Legal',     accent: 'purple' },
+  { href: '/circles',          label: 'Accountability Circles', short: 'Circles',   accent: 'coral'  },
+  { href: '/bills',            label: 'Bill Negotiation',    short: 'Bills',     accent: 'teal'   },
+  { href: '/widgets',          label: 'Widget Settings',     short: 'Widgets',   accent: 'indigo' },
+  { href: '/calendar',         label: 'Calendar Hub',        short: 'Calendar',  accent: 'purple' },
+  { href: '/financial-score',  label: 'Financial Score',     short: 'Fin Score', accent: 'teal'   },
 ];
 
 interface User {
@@ -190,7 +195,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancements 26–40 live. Digital Twin, AI Companion, Pet Hub, Sleep Coach, Legal Hub, and all prior features active.
+        Enhancements 26–46 live. All features active.
       </div>
     </nav>
   );
