@@ -1125,6 +1125,86 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Session 15 — Business Hub ────────────────────────────────────────────────
+  {
+    version: 53,
+    name: 'business_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS business_clients (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        company TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'active',
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_biz_clients_user ON business_clients(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS business_projects (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        client_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'active',
+        budget REAL,
+        deadline TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (client_id) REFERENCES business_clients(id) ON DELETE SET NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_biz_projects_user ON business_projects(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS business_invoices (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        client_id TEXT,
+        project_id TEXT,
+        invoice_number TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'draft',
+        issue_date TEXT NOT NULL,
+        due_date TEXT,
+        notes TEXT NOT NULL DEFAULT '',
+        tax_rate REAL NOT NULL DEFAULT 0,
+        total_amount REAL NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (client_id) REFERENCES business_clients(id) ON DELETE SET NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_biz_invoices_user ON business_invoices(user_id, status);
+
+      CREATE TABLE IF NOT EXISTS business_invoice_items (
+        id TEXT PRIMARY KEY,
+        invoice_id TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        quantity REAL NOT NULL DEFAULT 1,
+        unit_price REAL NOT NULL DEFAULT 0,
+        amount REAL NOT NULL DEFAULT 0,
+        FOREIGN KEY (invoice_id) REFERENCES business_invoices(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_biz_inv_items ON business_invoice_items(invoice_id);
+
+      CREATE TABLE IF NOT EXISTS business_expenses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        project_id TEXT,
+        category TEXT NOT NULL DEFAULT 'Other',
+        description TEXT NOT NULL DEFAULT '',
+        amount REAL NOT NULL DEFAULT 0,
+        expense_date TEXT NOT NULL,
+        is_billable INTEGER NOT NULL DEFAULT 0,
+        receipt_note TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_biz_expenses_user ON business_expenses(user_id, expense_date DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,
