@@ -11,7 +11,7 @@ import {
   useReviewCard,
   useDueCards,
 } from '../api';
-import type { FlashcardDeck, Flashcard } from '../types';
+import type { FlashcardDeck } from '../types';
 
 type View = 'decks' | 'cards' | 'review';
 
