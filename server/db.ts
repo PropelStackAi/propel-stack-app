@@ -1205,6 +1205,47 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 19 — Relationships & People Hub ─────────────────────────────
+  {
+    version: 56,
+    name: 'relationships_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS relationship_contacts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        relationship TEXT NOT NULL DEFAULT 'friend',
+        birthday TEXT,
+        anniversary TEXT,
+        checkin_cadence TEXT NOT NULL DEFAULT 'monthly',
+        cadence_days INTEGER NOT NULL DEFAULT 30,
+        last_contact TEXT,
+        contact_method TEXT NOT NULL DEFAULT 'text',
+        photo_emoji TEXT NOT NULL DEFAULT '👤',
+        notes TEXT NOT NULL DEFAULT '',
+        is_private INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_rel_contacts_user ON relationship_contacts(user_id, last_contact DESC);
+      CREATE INDEX IF NOT EXISTS idx_rel_contacts_cadence ON relationship_contacts(user_id, checkin_cadence);
+
+      CREATE TABLE IF NOT EXISTS relationship_interactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        contact_id TEXT NOT NULL,
+        method TEXT NOT NULL DEFAULT 'text',
+        note TEXT NOT NULL DEFAULT '',
+        occurred_on TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (contact_id) REFERENCES relationship_contacts(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_rel_interactions_contact ON relationship_interactions(contact_id, occurred_on DESC);
+      CREATE INDEX IF NOT EXISTS idx_rel_interactions_user ON relationship_interactions(user_id, occurred_on DESC);
+    `,
+  },
+
   // ─── Enhancement 18 — Personal Finance Hub ───────────────────────────────────
   {
     version: 55,

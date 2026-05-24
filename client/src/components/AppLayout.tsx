@@ -33,6 +33,7 @@ const NAV: NavItem[] = [
   { href: '/business',       label: 'Business Hub',       short: 'Business', accent: 'teal'   },
   { href: '/notifications',    label: 'Notifications',      short: 'Alerts',   accent: 'coral'  },
   { href: '/personal-finance', label: 'Personal Finance',   short: 'Finance',  accent: 'indigo' },
+  { href: '/relationships',    label: 'Relationships',      short: 'People',   accent: 'teal'   },
 ];
 
 interface User {
@@ -170,7 +171,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancement 18 live. Personal Finance Hub, Smart Notifications.
+        Enhancement 19 live. Relationships Hub, Personal Finance, Smart Notifications.
       </div>
     </nav>
   );
