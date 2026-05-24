@@ -48,6 +48,10 @@ import { billsRouter }            from './routes/bills.js';               // Enh
 import { widgetsRouter }          from './routes/widgets.js';             // Enhancement 44
 import { calendarHubRouter }      from './routes/calendarHub.js';         // Enhancement 45
 import { financialScoreRouter }   from './routes/financialScore.js';      // Enhancement 46
+import { familyHubRouter }   from './routes/familyHub.js';     // Legacy upgrade
+import { awarenessRouter }   from './routes/awareness.js';     // Legacy upgrade
+import { lifeEventsRouter }  from './routes/lifeEvents.js';    // Legacy upgrade
+import { networkHubRouter }  from './routes/networkHub.js';    // Legacy upgrade
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -135,6 +139,10 @@ app.use('/api/bills',           billsRouter);              // Enhancement 43 -- 
 app.use('/api/widgets',         widgetsRouter);            // Enhancement 44 -- Widget Layer
 app.use('/api/calendar',        calendarHubRouter);        // Enhancement 45 -- Calendar Intelligence
 app.use('/api/finance',         financialScoreRouter);     // Enhancement 46 -- Financial Life Score
+app.use('/api/family',       familyHubRouter);    // Family Hub
+app.use('/api/awareness',    awarenessRouter);     // Awareness Hub
+app.use('/api/life-events',  lifeEventsRouter);   // Life Events Hub
+app.use('/api/network',      networkHubRouter);   // Network Hub
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

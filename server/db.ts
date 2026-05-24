@@ -2390,6 +2390,146 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  {
+    version: 84,
+    name: 'family_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS family_members (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        dob DATE,
+        avatar_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_family_members_user ON family_members(user_id);
+
+      CREATE TABLE IF NOT EXISTS family_tasks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        assignee_name TEXT,
+        due_date DATE,
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        completed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_family_tasks_user ON family_tasks(user_id);
+
+      CREATE TABLE IF NOT EXISTS emergency_contacts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        relationship TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_emergency_contacts_user ON emergency_contacts(user_id);
+    `,
+  },
+  {
+    version: 85,
+    name: 'awareness_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS daily_intentions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        intention TEXT NOT NULL,
+        date DATE NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      );
+      CREATE INDEX IF NOT EXISTS idx_daily_intentions_user ON daily_intentions(user_id, date DESC);
+
+      CREATE TABLE IF NOT EXISTS gratitude_entries (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        items JSONB NOT NULL DEFAULT '[]',
+        date DATE NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      );
+      CREATE INDEX IF NOT EXISTS idx_gratitude_entries_user ON gratitude_entries(user_id, date DESC);
+
+      CREATE TABLE IF NOT EXISTS breathing_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        duration_seconds INTEGER NOT NULL DEFAULT 0,
+        exercise_type TEXT NOT NULL DEFAULT '4-7-8',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_breathing_sessions_user ON breathing_sessions(user_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS mood_checkins (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        date DATE NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      );
+      CREATE INDEX IF NOT EXISTS idx_mood_checkins_user ON mood_checkins(user_id, date DESC);
+    `,
+  },
+  {
+    version: 86,
+    name: 'life_events_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS life_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        event_date DATE NOT NULL,
+        media_url TEXT,
+        ai_checklist JSONB DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_life_events_user ON life_events(user_id, event_date DESC);
+    `,
+  },
+  {
+    version: 87,
+    name: 'network_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS network_contacts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        company TEXT,
+        role TEXT,
+        email TEXT,
+        phone TEXT,
+        relationship_type TEXT NOT NULL DEFAULT 'contact',
+        last_contact_date DATE,
+        follow_up_date DATE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_network_contacts_user ON network_contacts(user_id);
+
+      CREATE TABLE IF NOT EXISTS network_wins (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        contact_id TEXT,
+        title TEXT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_network_wins_user ON network_wins(user_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS network_notes (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        contact_id TEXT NOT NULL,
+        note TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_network_notes_contact ON network_notes(contact_id, created_at DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

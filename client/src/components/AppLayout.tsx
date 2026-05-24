@@ -58,6 +58,15 @@ const NAV: NavItem[] = [
   { href: '/widgets',          label: 'Widget Settings',     short: 'Widgets',   accent: 'indigo' },
   { href: '/calendar',         label: 'Calendar Hub',        short: 'Calendar',  accent: 'purple' },
   { href: '/financial-score',  label: 'Financial Score',     short: 'Fin Score', accent: 'teal'   },
+  // ---- Upgraded legacy hubs ----
+  { href: '/family',           label: 'Family Hub',          short: 'Family',    accent: 'coral'  },
+  { href: '/kitchen',          label: 'Kitchen & Pantry',    short: 'Kitchen',   accent: 'teal'   },
+  { href: '/inbox',            label: 'Smart Inbox',         short: 'Inbox',     accent: 'indigo' },
+  { href: '/awareness',        label: 'Mindfulness',         short: 'Mindful',   accent: 'purple' },
+  { href: '/life-events',      label: 'Life Events',         short: 'Milestones',accent: 'purple' },
+  { href: '/network',          label: 'Network Hub',         short: 'Network',   accent: 'indigo' },
+  { href: '/apps',             label: 'Connected Apps',      short: 'Apps',      accent: 'coral'  },
+  { href: '/profiles',         label: 'Profile & Settings',  short: 'Settings',  accent: 'indigo' },
 ];
 
 interface User {
@@ -195,7 +204,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancements 26–46 live. All features active.
+        Enhancements 26–46 live. All 8 legacy hubs upgraded. Full feature set active.
       </div>
     </nav>
   );
