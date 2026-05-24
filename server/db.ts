@@ -1555,6 +1555,58 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 41 — Security & Compliance Hardening ───────────────────────
+  {
+    version: 63,
+    name: 'user_privacy_settings',
+    sql: `
+      CREATE TABLE IF NOT EXISTS user_privacy_settings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        send_health_to_ai BOOLEAN NOT NULL DEFAULT true,
+        send_finance_to_ai BOOLEAN NOT NULL DEFAULT true,
+        send_mood_to_ai BOOLEAN NOT NULL DEFAULT true,
+        send_relationships_to_ai BOOLEAN NOT NULL DEFAULT true,
+        send_goals_to_ai BOOLEAN NOT NULL DEFAULT true,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+  {
+    version: 62,
+    name: 'token_revocations',
+    sql: `
+      CREATE TABLE IF NOT EXISTS token_revocations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token_jti TEXT NOT NULL UNIQUE,
+        revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_token_revocations_jti ON token_revocations(token_jti);
+      CREATE INDEX IF NOT EXISTS idx_token_revocations_user ON token_revocations(user_id);
+    `,
+  },
+  {
+    version: 61,
+    name: 'audit_log',
+    sql: `
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        action TEXT NOT NULL,
+        resource TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action, created_at DESC);
+    `,
+  },
+
   // ─── Enhancement 23 — Smart Document Intelligence ────────────────────────────
   {
     version: 60,

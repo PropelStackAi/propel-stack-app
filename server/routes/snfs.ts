@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { db, getCurrentUserId } from '../db.js';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 /**
  * Special Needs Family Support Hub (SNFS) — Session 12.
@@ -225,7 +226,7 @@ snfsRouter.post('/conversations/:id/messages', async (req: Request, res: Respons
       try {
         const messages = history.map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content: m.content,
+          content: m.role === 'user' ? scrubPII(m.content as string) : m.content, // Enhancement 41
         }));
         const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',

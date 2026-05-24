@@ -5,6 +5,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { db, getCurrentUserId } from '../db.js';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 export const docIntelligenceRouter = Router();
 
@@ -90,7 +91,7 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [{ role: 'user', content: scrubPII(userPrompt) }], // Enhancement 41
       }),
     });
     if (!res.ok) return '';

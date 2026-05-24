@@ -32,6 +32,7 @@ import { RelationshipsHub } from './pages/RelationshipsHub';
 import { LearningHub }        from './pages/LearningHub';
 import { HomePropertyHub }   from './pages/HomePropertyHub';
 import { AICoach }           from './pages/AICoach';
+import { PrivacyDashboard }  from './pages/PrivacyDashboard';    // Enhancement 41
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -82,6 +83,7 @@ export function App() {
               <Route path="/learning"       component={LearningHub} />
               <Route path="/home-property"  component={HomePropertyHub} />
               <Route path="/coach"          component={AICoach} />
+              <Route path="/settings/privacy" component={PrivacyDashboard} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

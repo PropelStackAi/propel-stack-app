@@ -14,6 +14,7 @@ import { Router } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 export const coachingRouter = Router();
 
@@ -306,7 +307,7 @@ async function generateInsight(userId: string, prefs: { mental_health_enabled: n
   const winner = eligible[0];
 
   // Generate AI insight text
-  const userPrompt = `${winner.result.prompt_context}\n\nGenerate a warm 2-3 sentence life coaching observation with a gentle open question at the end. Remember: observations only, no directives.`;
+  const userPrompt = `${scrubPII(winner.result.prompt_context)}\n\nGenerate a warm 2-3 sentence life coaching observation with a gentle open question at the end. Remember: observations only, no directives.`;
 
   let insight_text = '';
   try {

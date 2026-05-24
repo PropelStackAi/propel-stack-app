@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { db, getCurrentUserId } from '../db.js';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 import {
   complete,
   estimateCost,
@@ -141,7 +142,7 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   let result;
   try {
     result = complete({
-      prompt: message,
+      prompt: scrubPII(message), // Enhancement 41: strip PII before AI
       model,
       mode,
       systemPrompt:

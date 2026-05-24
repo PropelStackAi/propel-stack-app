@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'node:crypto';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 export const studentRouter = Router();
 
@@ -25,7 +26,8 @@ async function callAI(
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: maxTokens, system, messages }),
+    body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: maxTokens, system,
+      messages: messages.map((m) => ({ ...m, content: m.role === 'user' ? scrubPII(m.content) : m.content })) }), // Enhancement 41
   });
   if (!res.ok) throw new Error(`AI error ${res.status}`);
   const data = await res.json() as { content: Array<{ type: string; text: string }> };

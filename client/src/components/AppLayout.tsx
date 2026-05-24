@@ -37,6 +37,7 @@ const NAV: NavItem[] = [
   { href: '/learning',         label: 'Learning Hub',       short: 'Learning', accent: 'indigo' },
   { href: '/home-property',    label: 'Home & Property',    short: 'Property', accent: 'teal'   },
   { href: '/coach',            label: 'AI Life Coach',      short: 'Coach',    accent: 'indigo' },
+  { href: '/settings/privacy', label: 'Privacy & Security', short: 'Privacy',  accent: 'purple' },
 ];
 
 interface User {
@@ -174,7 +175,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancement 23 live. Smart Document Intelligence, AI Life Coach, Home & Property, Learning Hub, Relationships, Personal Finance.
+        Enhancement 41 live. Security Hardening, Privacy Dashboard, AES-256-GCM encryption, PII scrubbing, audit logging.
       </div>
     </nav>
   );

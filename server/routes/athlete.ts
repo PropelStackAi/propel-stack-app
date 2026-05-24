@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { db, getCurrentUserId } from '../db.js';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 /**
  * Athlete Performance Hub — Session 13.
@@ -219,7 +220,7 @@ Return ONLY valid JSON matching this structure (no markdown, no explanation):
             model: 'claude-3-haiku-20240307',
             max_tokens: 4000,
             system: ATHLETE_SYSTEM_PROMPT,
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{ role: 'user', content: scrubPII(prompt) }], // Enhancement 41
           }),
         });
         if (aiRes.ok) {
@@ -548,7 +549,7 @@ athleteRouter.post('/ai/ask', async (req: Request, res: Response) => {
             model: 'claude-3-haiku-20240307',
             max_tokens: 800,
             system: ATHLETE_SYSTEM_PROMPT + (context ? `\n\n${context}` : ''),
-            messages: [{ role: 'user', content: question }],
+            messages: [{ role: 'user', content: scrubPII(question) }], // Enhancement 41
           }),
         });
         if (aiRes.ok) {

@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 export const homePropertyRouter = Router();
 
@@ -17,7 +18,7 @@ async function callAI(system: string, user: string): Promise<string> {
     model: 'claude-haiku-4-5',
     max_tokens: 800,
     system,
-    messages: [{ role: 'user', content: user }],
+    messages: [{ role: 'user', content: scrubPII(user) }], // Enhancement 41
   });
   const block = msg.content[0];
   return block.type === 'text' ? block.text : '';

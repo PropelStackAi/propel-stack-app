@@ -8,6 +8,7 @@
 import { Router } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'node:crypto';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 export const relationshipsRouter = Router();
 
@@ -54,7 +55,7 @@ async function callAI(system: string, userMsg: string, maxTokens = 400): Promise
       model: 'claude-haiku-4-5',
       max_tokens: maxTokens,
       system,
-      messages: [{ role: 'user', content: userMsg }],
+      messages: [{ role: 'user', content: scrubPII(userMsg) }], // Enhancement 41
     }),
   });
   if (!res.ok) throw new Error(`AI error ${res.status}`);

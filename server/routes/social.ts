@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'node:crypto';
+import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 
@@ -19,7 +20,7 @@ async function callAI(systemPrompt: string, userMsg: string): Promise<string> {
       model: 'claude-haiku-4-5',
       max_tokens: 1024,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMsg }],
+      messages: [{ role: 'user', content: scrubPII(userMsg) }], // Enhancement 41
     }),
   });
   if (!res.ok) throw new Error(`AI error ${res.status}`);

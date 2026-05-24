@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'node:path';
 import fs from 'node:fs';
 import { initDb, runMigrations, db, getCurrentUserId } from './db.js';
@@ -26,6 +27,7 @@ import { learningRouter }       from './routes/learning.js';
 import { homePropertyRouter }   from './routes/homeProperty.js';
 import { coachingRouter }        from './routes/coaching.js';
 import { docIntelligenceRouter } from './routes/docIntelligence.js';
+import { securityRouter }        from './routes/security.js';       // Enhancement 41
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -42,6 +44,10 @@ app.use(cors({
   origin: IS_PROD ? (o, cb) => cb(null, !o || (allowedOrigins as string[]).some((a) => o.startsWith(a))) : allowedOrigins,
   credentials: true,
 }));
+
+// Security headers — Enhancement 41
+// crossOriginEmbedderPolicy: false keeps iframe PDF preview working
+app.use(helmet({ crossOriginEmbedderPolicy: false }));
 
 // Raw body for Stripe webhooks must come before express.json()
 app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
@@ -88,6 +94,7 @@ app.use('/api/learning',       learningRouter);          // Enhancement 20 -- Le
 app.use('/api/home-property',  homePropertyRouter);      // Enhancement 21 -- Home & Property Hub
 app.use('/api/coaching',       coachingRouter);          // Enhancement 22 -- AI Life Coach Mode
 app.use('/api/doc-intelligence', docIntelligenceRouter); // Enhancement 23 -- Smart Document Intelligence
+app.use('/api/security',       securityRouter);          // Enhancement 41 -- Security & Compliance
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
