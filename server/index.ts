@@ -28,6 +28,11 @@ import { homePropertyRouter }   from './routes/homeProperty.js';
 import { coachingRouter }        from './routes/coaching.js';
 import { docIntelligenceRouter } from './routes/docIntelligence.js';
 import { securityRouter }        from './routes/security.js';       // Enhancement 41
+import { credentialBridgeRouter } from './routes/credentialBridge.js'; // Enhancement 26
+import { agentTasksRouter }       from './routes/agentTasks.js';       // Enhancement 27
+import { voiceAIRouter }          from './routes/voiceAI.js';          // Enhancement 28
+import { timelineRouter }         from './routes/timeline.js';         // Enhancement 29
+import { estateVaultRouter }      from './routes/estateVault.js';      // Enhancement 30
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -94,7 +99,12 @@ app.use('/api/learning',       learningRouter);          // Enhancement 20 -- Le
 app.use('/api/home-property',  homePropertyRouter);      // Enhancement 21 -- Home & Property Hub
 app.use('/api/coaching',       coachingRouter);          // Enhancement 22 -- AI Life Coach Mode
 app.use('/api/doc-intelligence', docIntelligenceRouter); // Enhancement 23 -- Smart Document Intelligence
-app.use('/api/security',       securityRouter);          // Enhancement 41 -- Security & Compliance
+app.use('/api/security',          securityRouter);          // Enhancement 41 -- Security & Compliance
+app.use('/api/credential-bridge', credentialBridgeRouter); // Enhancement 26 -- Credential Bridge
+app.use('/api/agent-tasks',       agentTasksRouter);       // Enhancement 27 -- AI Agent Tasks
+app.use('/api/voice',             voiceAIRouter);          // Enhancement 28 -- Voice AI
+app.use('/api/timeline',          timelineRouter);         // Enhancement 29 -- Life Timeline
+app.use('/api/estate-vault',      estateVaultRouter);      // Enhancement 30 -- Estate Vault
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

@@ -37,7 +37,12 @@ const NAV: NavItem[] = [
   { href: '/learning',         label: 'Learning Hub',       short: 'Learning', accent: 'indigo' },
   { href: '/home-property',    label: 'Home & Property',    short: 'Property', accent: 'teal'   },
   { href: '/coach',            label: 'AI Life Coach',      short: 'Coach',    accent: 'indigo' },
-  { href: '/settings/privacy', label: 'Privacy & Security', short: 'Privacy',  accent: 'purple' },
+  { href: '/settings/privacy',  label: 'Privacy & Security',  short: 'Privacy',   accent: 'purple' },
+  { href: '/credential-bridge', label: 'App Connections',    short: 'Bridge',    accent: 'teal'   },
+  { href: '/agent',             label: 'AI Agent',           short: 'Agent',     accent: 'coral'  },
+  { href: '/voice',             label: 'Voice Mode',         short: 'Voice',     accent: 'indigo' },
+  { href: '/timeline',          label: 'Life Timeline',      short: 'Timeline',  accent: 'purple' },
+  { href: '/estate',            label: 'Estate Vault',       short: 'Estate',    accent: 'indigo' },
 ];
 
 interface User {
@@ -175,7 +180,7 @@ function Sidebar({ currentPath, planTier }: { currentPath: string; planTier?: st
         Build status
       </div>
       <div className="mt-2 px-3 text-xs text-surface-muted leading-relaxed">
-        Enhancement 41 live. Security Hardening, Privacy Dashboard, AES-256-GCM encryption, PII scrubbing, audit logging.
+        Enhancements 26–30 live. Credential Bridge, AI Agent, Voice Mode, Life Timeline, Estate Vault.
       </div>
     </nav>
   );

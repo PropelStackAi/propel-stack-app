@@ -33,6 +33,11 @@ import { LearningHub }        from './pages/LearningHub';
 import { HomePropertyHub }   from './pages/HomePropertyHub';
 import { AICoach }           from './pages/AICoach';
 import { PrivacyDashboard }  from './pages/PrivacyDashboard';    // Enhancement 41
+import { CredentialBridge } from './pages/CredentialBridge';     // Enhancement 26
+import { AgentTasks }       from './pages/AgentTasks';           // Enhancement 27
+import { VoiceMode }        from './pages/VoiceMode';            // Enhancement 28
+import { LifeTimeline }     from './pages/LifeTimeline';         // Enhancement 29
+import { EstateVault }      from './pages/EstateVault';          // Enhancement 30
 import { NotFound } from './pages/NotFound';
 
 /**
@@ -83,7 +88,12 @@ export function App() {
               <Route path="/learning"       component={LearningHub} />
               <Route path="/home-property"  component={HomePropertyHub} />
               <Route path="/coach"          component={AICoach} />
-              <Route path="/settings/privacy" component={PrivacyDashboard} />
+              <Route path="/settings/privacy"  component={PrivacyDashboard} />
+              <Route path="/credential-bridge" component={CredentialBridge} />
+              <Route path="/agent"             component={AgentTasks} />
+              <Route path="/voice"             component={VoiceMode} />
+              <Route path="/timeline"          component={LifeTimeline} />
+              <Route path="/estate"            component={EstateVault} />
               <Route component={NotFound} />
             </Switch>
           </AppLayout>

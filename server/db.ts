@@ -1660,6 +1660,147 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 26 — Universal Web App Credential Bridge ──────────────────
+  {
+    version: 64,
+    name: 'credential_bridge_connections',
+    sql: `
+      CREATE TABLE IF NOT EXISTS credential_bridge_connections (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        app_name TEXT NOT NULL,
+        app_url TEXT NOT NULL,
+        connection_type TEXT NOT NULL DEFAULT 'oauth',
+        oauth_token_enc TEXT,
+        oauth_refresh_enc TEXT,
+        credential_enc TEXT,
+        field_mapping JSONB DEFAULT '{}',
+        target_hub TEXT NOT NULL DEFAULT 'athlete',
+        sync_frequency TEXT NOT NULL DEFAULT 'daily',
+        last_synced_at TIMESTAMPTZ,
+        sync_status TEXT NOT NULL DEFAULT 'pending',
+        sync_error TEXT,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_cbc_user ON credential_bridge_connections(user_id, is_active);
+      CREATE INDEX IF NOT EXISTS idx_cbc_hub ON credential_bridge_connections(user_id, target_hub);
+    `,
+  },
+
+  // ─── Enhancement 27 — AI Agent Task Execution ───────────────────────────────
+  {
+    version: 65,
+    name: 'agent_tasks',
+    sql: `
+      CREATE TABLE IF NOT EXISTS agent_tasks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        task_type TEXT NOT NULL DEFAULT 'general',
+        task_description TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'pending_approval',
+        preview_shown_at TIMESTAMPTZ,
+        approved_at TIMESTAMPTZ,
+        executed_at TIMESTAMPTZ,
+        result_summary TEXT,
+        confirmation_id TEXT,
+        cost_amount REAL,
+        can_undo BOOLEAN NOT NULL DEFAULT false,
+        undo_deadline TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_tasks_user ON agent_tasks(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_agent_tasks_status ON agent_tasks(user_id, status);
+    `,
+  },
+
+  // ─── Enhancement 28 — Voice-First Ambient AI Mode ───────────────────────────
+  {
+    version: 66,
+    name: 'voice_sessions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS voice_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        transcript TEXT NOT NULL DEFAULT '',
+        intent_type TEXT,
+        hub_routed TEXT,
+        action_taken TEXT,
+        response_text TEXT,
+        duration_seconds INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_voice_sessions_user ON voice_sessions(user_id, created_at DESC);
+    `,
+  },
+
+  // ─── Enhancement 29 — Life Timeline & Memory Archive ────────────────────────
+  {
+    version: 67,
+    name: 'timeline_memories',
+    sql: `
+      CREATE TABLE IF NOT EXISTS timeline_memories (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        occurred_on DATE NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT,
+        hub_source TEXT,
+        memory_type TEXT NOT NULL DEFAULT 'manual',
+        photo_url TEXT,
+        is_shared BOOLEAN NOT NULL DEFAULT false,
+        is_private BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_timeline_user ON timeline_memories(user_id, occurred_on DESC);
+      CREATE INDEX IF NOT EXISTS idx_timeline_type ON timeline_memories(user_id, memory_type);
+    `,
+  },
+
+  // ─── Enhancement 30 — Estate & Legacy Vault ─────────────────────────────────
+  {
+    version: 68,
+    name: 'estate_vault',
+    sql: `
+      CREATE TABLE IF NOT EXISTS estate_vault (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        section TEXT NOT NULL,
+        title TEXT,
+        content_enc TEXT,
+        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_estate_vault_user ON estate_vault(user_id, section);
+
+      CREATE TABLE IF NOT EXISTS trusted_access_delegates (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        delegate_name TEXT NOT NULL DEFAULT '',
+        delegate_email TEXT NOT NULL DEFAULT '',
+        relationship TEXT NOT NULL DEFAULT '',
+        access_level TEXT NOT NULL DEFAULT 'full',
+        is_verified BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_trusted_delegates_user ON trusted_access_delegates(user_id);
+
+      CREATE TABLE IF NOT EXISTS estate_disclaimer_acks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        version TEXT NOT NULL DEFAULT 'PSAI-EST-DISC-v1.0',
+        acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,
