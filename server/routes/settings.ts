@@ -85,6 +85,45 @@ settingsRouter.delete('/not-now', async (_req: Request, res: Response) => {
   res.json({ active: false, message: 'Not Now mode cleared' });
 });
 
+// ─── Family Sharing Toggle (Enhancement 22) ──────────────────────────────────
+
+settingsRouter.get('/family-sharing', async (_req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const user = await db
+    .prepare('SELECT family_sharing_enabled, plan_tier FROM users WHERE id = ?')
+    .get(userId) as { family_sharing_enabled: boolean; plan_tier: string } | undefined;
+
+  const isFamilyPlan = ['family', 'network', 'elite'].includes(user?.plan_tier ?? '');
+
+  res.json({
+    enabled: !!user?.family_sharing_enabled,
+    available: isFamilyPlan,
+    planTier: user?.plan_tier ?? 'spark',
+  });
+});
+
+settingsRouter.post('/family-sharing', async (req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const { enabled } = req.body ?? {};
+  if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled (boolean) required' });
+
+  // Check plan tier
+  const user = await db
+    .prepare('SELECT plan_tier FROM users WHERE id = ?')
+    .get(userId) as { plan_tier: string } | undefined;
+  const isFamilyPlan = ['family', 'network', 'elite'].includes(user?.plan_tier ?? '');
+
+  if (!isFamilyPlan) {
+    return res.status(403).json({ error: 'Family sharing requires a Family, Network, or Elite plan' });
+  }
+
+  await db
+    .prepare('UPDATE users SET family_sharing_enabled = ? WHERE id = ?')
+    .run(enabled, userId);
+
+  res.json({ enabled, ok: true });
+});
+
 // ─── Utility: check if user is in Not Now mode (used by jobs) ────────────────
 
 export async function isUserInNotNowMode(userId: string): Promise<boolean> {

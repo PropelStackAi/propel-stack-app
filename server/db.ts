@@ -2559,6 +2559,17 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 22: Family Plan Private/Shared Toggle ──────────────────────
+  {
+    version: 98,
+    name: 'family_sharing',
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS family_sharing_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE life_wins ADD COLUMN IF NOT EXISTS is_family_shared BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_family_shared BOOLEAN NOT NULL DEFAULT FALSE;
+    `,
+  },
+
   // ─── Enhancement 17: "Not Now" Mode ─────────────────────────────────────────
   {
     version: 97,

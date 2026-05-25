@@ -3,6 +3,7 @@
  * Propel Stack AI, LLC
  */
 import { useState } from 'react';
+import { FamilySharingToggle } from '../components/FamilySharingToggle'; // Enhancement 22
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
 
@@ -170,6 +171,9 @@ export function FamilyHub() {
           </p>
         </div>
       </div>
+
+      {/* Family Sharing Toggle (Enhancement 22) */}
+      <FamilySharingToggle />
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-surface-sunk rounded-xl p-1">

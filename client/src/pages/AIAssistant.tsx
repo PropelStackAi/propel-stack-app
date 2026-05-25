@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCreateConversation } from '../features/assistant/api';
 import { BudgetBanner } from '../features/assistant/components/BudgetBanner';
+import { TokenUsageCard } from '../features/assistant/components/TokenUsageCard';
 import { ChatView } from '../features/assistant/components/ChatView';
 import { ConversationSidebar } from '../features/assistant/components/ConversationSidebar';
 import type { Mode, Model } from '../features/assistant/types';
@@ -29,8 +30,11 @@ export function AIAssistant() {
       <BudgetBanner />
 
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-[18rem_1fr] gap-6">
-        <aside className="card p-3 lg:h-[calc(100vh-12rem)]">
-          <ConversationSidebar selectedId={selectedId} onSelect={setSelectedId} />
+        <aside className="space-y-3">
+          <div className="card p-3 lg:h-[calc(100vh-18rem)]">
+            <ConversationSidebar selectedId={selectedId} onSelect={setSelectedId} />
+          </div>
+          <TokenUsageCard />
         </aside>
         <section className="card">
           <ChatView
