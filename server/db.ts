@@ -3239,6 +3239,28 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
     `,
   },
+
+  {
+    version: 119,
+    name: 'dpa_rbac',
+    sql: `
+      -- Enhancement 34: RBAC — add role column to users
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
+
+      -- Enhancement 36: Data Processing Agreements
+      CREATE TABLE IF NOT EXISTS dpa_acceptances (
+        id          TEXT        PRIMARY KEY,
+        user_id     TEXT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        org_id      TEXT,
+        dpa_version TEXT        NOT NULL DEFAULT '1.0',
+        ip_address  TEXT,
+        user_agent  TEXT,
+        accepted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_dpa_acceptances_user ON dpa_acceptances(user_id);
+      CREATE INDEX IF NOT EXISTS idx_dpa_acceptances_org  ON dpa_acceptances(org_id);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

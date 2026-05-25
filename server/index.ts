@@ -79,6 +79,7 @@ import { startChurnPredictionScheduler } from './jobs/churnPrediction.js'; // Ph
 import { ssoRouter }              from './routes/sso.js';               // Phase 4 — SSO Partner Portal
 import { billingRouter }          from './routes/billing.js';            // Phase 3 Step 10 — Billing Checkout
 import { pushTokensRouter }       from './routes/pushTokens.js';         // Phase 3 Step 8 — Push Token Registry
+import { dpaRouter }              from './routes/dpa.js';                // Enhancement 36 — Data Processing Agreements
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -191,6 +192,7 @@ app.use('/api/nps',               npsRouter);              // Phase 4 — NPS Fe
 app.use('/api/sso',               ssoRouter);              // Phase 4 — SSO Partner Portal
 app.use('/api/billing',           billingRouter);          // Phase 3 Step 10 — Billing Checkout & Portal
 app.use('/api/push-tokens',       pushTokensRouter);       // Phase 3 Step 8 — Push Token Registry
+app.use('/api/dpa',               dpaRouter);              // Enhancement 36 — Data Processing Agreements
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

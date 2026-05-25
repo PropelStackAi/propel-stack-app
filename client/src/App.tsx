@@ -84,6 +84,10 @@ const WebhookSettingsPage = lazy(() => import('./pages/WebhookSettings').then(m 
 const SuperDashboard     = lazy(() => import('./pages/admin/SuperDashboard').then(m => ({ default: m.SuperDashboard })));
 const SsoPortal          = lazy(() => import('./pages/SsoPortal').then(m => ({ default: m.SsoPortal })));
 
+// ---- Enhancement 36 / 43 — DPA & Security Audit ----
+const DataProcessingAgreement = lazy(() => import('./pages/DataProcessingAgreement').then(m => ({ default: m.DataProcessingAgreement })));
+const SecurityAudit      = lazy(() => import('./pages/SecurityAudit').then(m => ({ default: m.SecurityAudit })));
+
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
@@ -206,6 +210,9 @@ export function App() {
                   <Route path="/privacy-policy"  component={PrivacyDisclosure} />
                   <Route path="/webhooks"        component={WebhookSettingsPage} />
                   <Route path="/admin"           component={SuperDashboard} />
+                  {/* Enhancement 36 / 43 — DPA & Security Audit */}
+                  <Route path="/dpa"             component={DataProcessingAgreement} />
+                  <Route path="/admin/security"  component={SecurityAudit} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>
