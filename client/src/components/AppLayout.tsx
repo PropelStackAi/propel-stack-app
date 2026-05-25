@@ -12,6 +12,7 @@ import { QuickCapture } from '../features/dashboard/components/QuickCapture';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
 import { NotNowBanner } from './NotNowBanner'; // Enhancement 17
+import { SyncIndicator } from './SyncIndicator'; // Session 14 Enhancement 8
 
 interface User {
   id: string;
@@ -43,14 +44,17 @@ function MobileHeader({ user }: { user?: User }) {
         <Logo />
         <span className="font-display font-extrabold text-[16px] text-surface-ink">Propel Stack AI</span>
       </Link>
-      {user && (
-        <div
-          className="w-8 h-8 rounded-full bg-brand-indigo text-white grid place-items-center font-semibold text-sm"
-          aria-label={`Signed in as ${user.display_name}`}
-        >
-          {user.display_name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <SyncIndicator />
+        {user && (
+          <div
+            className="w-8 h-8 rounded-full bg-brand-indigo text-white grid place-items-center font-semibold text-sm"
+            aria-label={`Signed in as ${user.display_name}`}
+          >
+            {user.display_name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+      </div>
     </header>
   );
 }

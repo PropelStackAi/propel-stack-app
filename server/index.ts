@@ -59,6 +59,11 @@ import { briefingRouter }    from './routes/briefing.js';     // Enhancement 7-8
 import { startBriefingScheduler } from './jobs/briefingJob.js'; // Enhancement 7-8
 import { startReEngagementScheduler } from './jobs/reEngagementJob.js'; // Enhancement 11
 import { settingsRouter }         from './routes/settings.js';          // Enhancement 17
+import { lifescoreRouter }       from './routes/lifescore.js';         // Session 14 Enh 1: Life Score
+import { dailyBriefingRouter }   from './routes/dailyBriefing.js';     // Session 14 Enh 2: Daily Briefing
+import { goalsRouter }           from './routes/goals.js';             // Session 14 Enh 3: Goals Hub
+import { journalRouter }         from './routes/journal.js';           // Session 14 Enh 4: Journal Hub
+import { aiChatRouter }          from './routes/aiChat.js';            // Session 14 Enh 7: AI Chat
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -152,8 +157,13 @@ app.use('/api/life-events',  lifeEventsRouter);   // Life Events Hub
 app.use('/api/network',      networkHubRouter);   // Network Hub
 app.use('/api/memory',       memoryRouter);       // Enhancement 1-3: Three-Tier Memory System
 app.use('/api/onboarding',   onboardingRouter);   // Enhancement 4-6: Onboarding
-app.use('/api/briefing',     briefingRouter);     // Enhancement 7-8: Briefing & Weekly Review
-app.use('/api/settings',     settingsRouter);     // Enhancement 17: Settings (Not Now Mode)
+app.use('/api/briefing',       briefingRouter);       // Enhancement 7-8: Briefing & Weekly Review
+app.use('/api/settings',       settingsRouter);       // Enhancement 17: Settings (Not Now Mode)
+app.use('/api/lifescore',      lifescoreRouter);      // Session 14 Enh 1: Life Score Dashboard
+app.use('/api/daily-briefing', dailyBriefingRouter);  // Session 14 Enh 2: AI Daily Briefing (Cross-Hub)
+app.use('/api/goals',          goalsRouter);           // Session 14 Enh 3: Goals & Milestones
+app.use('/api/journal',        journalRouter);         // Session 14 Enh 4: Mood & Journal Hub
+app.use('/api/ai-chat',        aiChatRouter);          // Session 14 Enh 7: AI Chat with Memory
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

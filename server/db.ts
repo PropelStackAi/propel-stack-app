@@ -2703,6 +2703,191 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Session 14 Enhancements 1-8 ───────────────────────────────────────────
+  {
+    version: 99,
+    name: 'life_scores',
+    sql: `
+      CREATE TABLE IF NOT EXISTS life_scores (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        score_date TEXT NOT NULL,
+        total_score INTEGER NOT NULL DEFAULT 0,
+        finance_score INTEGER NOT NULL DEFAULT 0,
+        health_score INTEGER NOT NULL DEFAULT 0,
+        social_score INTEGER NOT NULL DEFAULT 0,
+        tasks_score INTEGER NOT NULL DEFAULT 0,
+        mood_score INTEGER NOT NULL DEFAULT 0,
+        ai_summary TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, score_date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_life_scores_user ON life_scores(user_id, score_date DESC);
+      CREATE TABLE IF NOT EXISTS score_weights (
+        user_id TEXT PRIMARY KEY,
+        finance_weight REAL NOT NULL DEFAULT 0.25,
+        health_weight REAL NOT NULL DEFAULT 0.25,
+        social_weight REAL NOT NULL DEFAULT 0.20,
+        tasks_weight REAL NOT NULL DEFAULT 0.15,
+        mood_weight REAL NOT NULL DEFAULT 0.15,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+  {
+    version: 100,
+    name: 'daily_briefings_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS daily_briefings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        briefing_date TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '{}',
+        hub_snapshot TEXT NOT NULL DEFAULT '{}',
+        model_used TEXT NOT NULL DEFAULT 'claude-sonnet-4-5',
+        tokens_used INTEGER NOT NULL DEFAULT 0,
+        read_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, briefing_date),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_daily_briefings_user ON daily_briefings(user_id, briefing_date DESC);
+    `,
+  },
+  {
+    version: 101,
+    name: 'goals_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS goals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'personal',
+        target_value REAL NOT NULL DEFAULT 0,
+        current_value REAL NOT NULL DEFAULT 0,
+        unit TEXT NOT NULL DEFAULT '%',
+        hub_source TEXT,
+        hub_metric TEXT,
+        target_date TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        ai_coaching_enabled BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id, status, created_at DESC);
+      CREATE TABLE IF NOT EXISTS goal_milestones (
+        id TEXT PRIMARY KEY,
+        goal_id TEXT NOT NULL,
+        milestone_pct INTEGER NOT NULL,
+        achieved_at TIMESTAMPTZ,
+        ai_message TEXT NOT NULL DEFAULT '',
+        FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_milestones_goal ON goal_milestones(goal_id);
+      CREATE TABLE IF NOT EXISTS goal_progress_log (
+        id TEXT PRIMARY KEY,
+        goal_id TEXT NOT NULL,
+        logged_value REAL NOT NULL,
+        logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        source TEXT NOT NULL DEFAULT 'manual',
+        FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_progress_goal ON goal_progress_log(goal_id, logged_at DESC);
+    `,
+  },
+  {
+    version: 102,
+    name: 'journal_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS journal_entries (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        entry_date TEXT NOT NULL,
+        mood_score INTEGER NOT NULL DEFAULT 3,
+        mood_label TEXT NOT NULL DEFAULT 'okay',
+        content TEXT NOT NULL DEFAULT '',
+        ai_prompt_used TEXT NOT NULL DEFAULT '',
+        ai_reflection TEXT NOT NULL DEFAULT '',
+        tags TEXT NOT NULL DEFAULT '[]',
+        is_private BOOLEAN NOT NULL DEFAULT true,
+        ai_opted_in BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_journal_user ON journal_entries(user_id, entry_date DESC);
+      CREATE TABLE IF NOT EXISTS mood_insights (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        insight_date TEXT NOT NULL,
+        insight_type TEXT NOT NULL DEFAULT 'pattern',
+        content TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_mood_insights_user ON mood_insights(user_id, insight_date DESC);
+    `,
+  },
+  {
+    version: 103,
+    name: 'life_events_enhancements',
+    sql: `
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS hub_source TEXT;
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS hub_ref_id TEXT;
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS amount REAL;
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS recurrence TEXT NOT NULL DEFAULT 'none';
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS reminder_days INTEGER NOT NULL DEFAULT 3;
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS ai_prep_suggestions TEXT NOT NULL DEFAULT '[]';
+      ALTER TABLE life_events ADD COLUMN IF NOT EXISTS is_completed BOOLEAN NOT NULL DEFAULT false;
+    `,
+  },
+  {
+    version: 104,
+    name: 'chat_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS chat_threads (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT 'New conversation',
+        hub_context TEXT NOT NULL DEFAULT '[]',
+        last_message_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_threads_user ON chat_threads(user_id, last_message_at DESC);
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        thread_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        content TEXT NOT NULL,
+        tokens_used INTEGER NOT NULL DEFAULT 0,
+        model_used TEXT NOT NULL DEFAULT 'claude-haiku-4-5',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages(thread_id, created_at ASC);
+    `,
+  },
+  {
+    version: 105,
+    name: 'sync_queue',
+    sql: `
+      CREATE TABLE IF NOT EXISTS sync_queue (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        action TEXT NOT NULL DEFAULT 'CREATE',
+        table_name TEXT NOT NULL,
+        record_id TEXT,
+        payload TEXT NOT NULL DEFAULT '{}',
+        retry_count INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_sync_queue_user ON sync_queue(user_id, created_at ASC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

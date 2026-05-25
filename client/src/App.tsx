@@ -77,6 +77,15 @@ const Onboarding         = lazy(() => import('./pages/Onboarding').then(m => ({ 
 // ---- Enhancement 7-8: Briefing & Weekly Review ----
 const WeeklyReview       = lazy(() => import('./pages/WeeklyReview').then(m => ({ default: m.WeeklyReview })));
 
+// ---- Session 14 Enhancements 1-8 ----
+const LifeScore          = lazy(() => import('./pages/LifeScore').then(m => ({ default: m.LifeScore })));
+const DailyBriefing      = lazy(() => import('./pages/DailyBriefing').then(m => ({ default: m.DailyBriefing })));
+const Goals              = lazy(() => import('./pages/Goals').then(m => ({ default: m.Goals })));
+const Journal            = lazy(() => import('./pages/Journal').then(m => ({ default: m.Journal })));
+const EventsTimeline     = lazy(() => import('./pages/EventsTimeline').then(m => ({ default: m.EventsTimeline })));
+const PrivacyVault       = lazy(() => import('./pages/PrivacyVault').then(m => ({ default: m.PrivacyVault })));
+const AIChat             = lazy(() => import('./pages/AIChat').then(m => ({ default: m.AIChat })));
+
 // ---- Upgraded legacy hubs ----
 const FamilyHub          = lazy(() => import('./pages/FamilyHub').then(m => ({ default: m.FamilyHub })));
 const SmartKitchen       = lazy(() => import('./pages/SmartKitchen').then(m => ({ default: m.SmartKitchen })));
@@ -158,6 +167,14 @@ export function App() {
                   <Route path="/financial-score" component={FinancialScore} />
                   <Route path="/memory" component={MemoryHub} />
                   <Route path="/review" component={WeeklyReview} />
+                  {/* Session 14 Enhancements 1-8 */}
+                  <Route path="/lifescore" component={LifeScore} />
+                  <Route path="/briefing" component={DailyBriefing} />
+                  <Route path="/goals" component={Goals} />
+                  <Route path="/journal" component={Journal} />
+                  <Route path="/events" component={EventsTimeline} />
+                  <Route path="/privacy" component={PrivacyVault} />
+                  <Route path="/chat" component={AIChat} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

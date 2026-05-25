@@ -8,7 +8,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  LayoutDashboard, Sparkles, Activity, Target, Smile, Clock, Calendar, BarChart2,
+  LayoutDashboard, Sparkles, Activity, Target, Smile, Clock, BarChart2,
   Heart, Moon, Zap, BookOpen, ScrollText,
   DollarSign, TrendingUp, Scissors,
   Users, UtensilsCrossed, Home, PawPrint,
@@ -16,6 +16,7 @@ import {
   Share2, HeartHandshake, CircleDot, Plane,
   MessageCircle, FileText, Shield, Plug, Lock, Brain,
   Settings, Bell, ChevronDown, type LucideIcon,
+  NotebookPen, CalendarClock, MessageSquare, Info,
 } from 'lucide-react';
 import { useUnreadCount } from '../features/notifications/api';
 
@@ -38,11 +39,13 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'my-life',
     label: 'MY LIFE',
     items: [
-      { href: '/financial-score', label: 'Life Score',        icon: Activity    },
-      { href: '/streaks',         label: 'Goals & Streaks',   icon: Target      },
-      { href: '/awareness',       label: 'Mood & Mindfulness',icon: Smile       },
+      { href: '/lifescore',       label: 'Life Score',        icon: Activity    },
+      { href: '/briefing',        label: 'Daily Briefing',    icon: Sparkles    },
+      { href: '/goals',           label: 'Goals',             icon: Target      },
+      { href: '/journal',         label: 'Mood & Journal',    icon: NotebookPen },
+      { href: '/events',          label: 'Life Events',       icon: CalendarClock},
+      { href: '/awareness',       label: 'Mindfulness',       icon: Smile       },
       { href: '/timeline',        label: 'Life Timeline',     icon: Clock       },
-      { href: '/life-events',     label: 'Life Events',       icon: Calendar    },
       { href: '/recap',           label: 'Weekly Recap',      icon: BarChart2   },
       { href: '/review',          label: 'Weekly Review',     icon: ScrollText  },
     ],
@@ -100,12 +103,14 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'platform',
     label: 'PLATFORM',
     items: [
+      { href: '/chat',             label: 'AI Chat',          icon: MessageSquare },
       { href: '/coach',            label: 'AI Life Coach',    icon: MessageCircle },
       { href: '/documents',        label: 'Document Vault',   icon: FileText      },
       { href: '/estate',           label: 'Estate & Legacy',  icon: Shield        },
       { href: '/apps',             label: 'Connected Apps',   icon: Plug          },
       { href: '/memory',           label: 'Memory Health',    icon: Brain         },
-      { href: '/settings/privacy', label: 'Privacy & Security', icon: Lock        },
+      { href: '/privacy',          label: 'Privacy & Data',   icon: Lock          },
+      { href: '/settings/privacy', label: 'Privacy Settings', icon: Info          },
     ],
   },
 ];
