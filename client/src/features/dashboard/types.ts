@@ -51,6 +51,15 @@ export interface Brief {
   counts: { dueTasks: number; dueBills: number; overdueFollowUps: number };
 }
 
+// Enhancement 9: Smart task suggestion (from /api/briefing/smart-tasks)
+export interface SmartTask {
+  id: string;
+  title: string;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+  type: 'task' | 'habit' | 'bill' | 'followup';
+}
+
 // Enhancement 7: Structured morning briefing (from /api/briefing/today)
 export interface StructuredBrief {
   headline: string;

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/apiRequest';
-import type { Activity, Agenda, Brief, CaptureKind, Habit, StructuredBrief, Summary, Task, Weather, WeeklyReview } from './types';
+import type { Activity, Agenda, Brief, CaptureKind, Habit, SmartTask, StructuredBrief, Summary, Task, Weather, WeeklyReview } from './types';
 
 // HARD RULE #3: object form. HARD RULE #4: apiRequest returns parsed JSON.
 
@@ -24,6 +24,15 @@ export function useActivity() {
 }
 export function useBrief() {
   return useQuery({ queryKey: K.brief, queryFn: () => apiRequest<Brief>('/api/dashboard/brief'), staleTime: 60 * 60_000 });
+}
+
+// Enhancement 9: Predictive smart tasks
+export function useSmartTasks() {
+  return useQuery({
+    queryKey: ['briefing', 'smart-tasks'],
+    queryFn: () => apiRequest<SmartTask[]>('/api/briefing/smart-tasks'),
+    staleTime: 15 * 60_000, // refresh every 15 minutes
+  });
 }
 
 // Enhancement 7: Structured morning briefing

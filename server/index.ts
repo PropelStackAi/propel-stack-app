@@ -57,6 +57,7 @@ import { startMemoryAnalysisScheduler } from './jobs/memoryAnalysis.js'; // Enha
 import { onboardingRouter }  from './routes/onboarding.js';   // Enhancement 4-6: Onboarding
 import { briefingRouter }    from './routes/briefing.js';     // Enhancement 7-8: Briefing & Weekly Review
 import { startBriefingScheduler } from './jobs/briefingJob.js'; // Enhancement 7-8
+import { startReEngagementScheduler } from './jobs/reEngagementJob.js'; // Enhancement 11
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -176,7 +177,8 @@ initDb()
     app.listen(PORT, () => {
       console.log(`[server] listening on http://localhost:${PORT}`);
       startMemoryAnalysisScheduler(); // Enhancement 3: Longitudinal Trend Detection
-      startBriefingScheduler();       // Enhancement 7-8: Morning Briefing + Weekly Review
+      startBriefingScheduler();         // Enhancement 7-8: Morning Briefing + Weekly Review
+      startReEngagementScheduler();    // Enhancement 11: 72-Hour Re-Engagement Flow
     });
   })
   .catch((err) => {

@@ -121,16 +121,32 @@ async function awardBadgeIfMilestone(userId: string, streak: StreakRow): Promise
     `).get(userId, ms.title) as { id: string } | undefined;
     if (existing) continue;
 
+    const winId = randomUUID();
     await db.prepare(`
       INSERT INTO life_wins (id, user_id, win_type, title, detail, source_hub, is_shared, occurred_on)
       VALUES (?, ?, 'badge', ?, ?, 'streaks', 0, ?)
     `).run(
-      randomUUID(),
+      winId,
       userId,
       ms.title,
       `${streak.current_len}-day ${streak.streak_type.replace('_', ' ')} streak reached!`,
       today,
     );
+
+    // Enhancement 12: Emit milestone celebration notification
+    const celebrationMsg = `🎉 ${ms.title} — ${streak.current_len}-day ${streak.streak_type.replace(/_/g, ' ')} streak! You're on fire.`;
+    await db.prepare(`
+      INSERT INTO notification_events (id, user_id, notif_type, trigger_key, title, body, hour_of_day, day_of_week)
+      VALUES (?, ?, 'milestone_celebration', ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      userId,
+      `milestone_${ms.len}_${streak.streak_type}`,
+      `🏆 Milestone Unlocked: ${ms.title}`,
+      celebrationMsg,
+      new Date().getHours(),
+      new Date().getDay(),
+    ).catch(() => {/* non-fatal */});
   }
 }
 

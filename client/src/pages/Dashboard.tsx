@@ -10,6 +10,7 @@ import { RecentActivity } from '../features/dashboard/components/RecentActivity'
 import { DashboardRecapBanner } from '../features/recap/components/DashboardRecapBanner';
 import { StreakCard } from '../features/streaks/components/StreakCard';
 import { CoachingInsightCard } from '../features/coaching/components/CoachingInsightCard';
+import { SmartTasks } from '../features/dashboard/components/SmartTasks';
 
 interface User { display_name: string }
 
@@ -32,6 +33,10 @@ export function Dashboard() {
       </div>
 
       <MorningBrief />
+
+      <div className="mt-4">
+        <SmartTasks />
+      </div>
 
       <div className="mt-6">
         <StatsRow />

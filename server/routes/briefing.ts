@@ -342,6 +342,118 @@ Return ONLY valid JSON (no markdown, no explanation) with exactly these fields:
   };
 }
 
+// ─── Predictive Task Surfacing (Enhancement 9) ───────────────────────────────
+
+interface SmartTask {
+  id: string;
+  title: string;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+  type: 'task' | 'habit' | 'bill' | 'followup';
+}
+
+briefingRouter.get('/smart-tasks', async (_req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const today = todayIso();
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const threedays = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+
+  const suggestions: SmartTask[] = [];
+
+  // 1. Overdue tasks (highest priority)
+  const overdue = await db
+    .prepare(
+      `SELECT id, title FROM tasks
+       WHERE user_id=? AND completed_at IS NULL AND due_date IS NOT NULL AND due_date < ?
+       ORDER BY due_date ASC LIMIT 2`,
+    )
+    .all(userId, today) as { id: string; title: string }[];
+
+  for (const t of overdue) {
+    suggestions.push({ id: t.id, title: t.title, reason: 'Overdue — tackle this first', priority: 'high', type: 'task' });
+  }
+
+  // 2. Tasks due today
+  if (suggestions.length < 3) {
+    const dueToday = await db
+      .prepare(
+        `SELECT id, title FROM tasks WHERE user_id=? AND completed_at IS NULL AND due_date = ? LIMIT 2`,
+      )
+      .all(userId, today) as { id: string; title: string }[];
+
+    for (const t of dueToday) {
+      if (suggestions.length >= 3) break;
+      suggestions.push({ id: t.id, title: t.title, reason: 'Due today', priority: 'high', type: 'task' });
+    }
+  }
+
+  // 3. Bills due within 3 days
+  if (suggestions.length < 3) {
+    const bills = await db
+      .prepare(
+        `SELECT id, name AS title, due_date FROM bills
+         WHERE user_id=? AND is_paid=0 AND due_date >= ? AND due_date <= ?
+         ORDER BY due_date ASC LIMIT 1`,
+      )
+      .all(userId, today, threedays) as { id: string; title: string; due_date: string }[];
+
+    for (const b of bills) {
+      if (suggestions.length >= 3) break;
+      const daysAway = Math.ceil((new Date(b.due_date).getTime() - Date.now()) / 86_400_000);
+      const when = daysAway === 0 ? 'due today' : daysAway === 1 ? 'due tomorrow' : `due in ${daysAway} days`;
+      suggestions.push({ id: b.id, title: `Pay: ${b.title}`, reason: `Bill ${when}`, priority: 'medium', type: 'bill' });
+    }
+  }
+
+  // 4. Habits not completed today
+  if (suggestions.length < 3) {
+    const habits = await db
+      .prepare(
+        `SELECT h.id, h.name AS title FROM habits h
+         LEFT JOIN habit_completions hc ON hc.habit_id = h.id AND hc.completed_on = ?
+         WHERE h.user_id = ? AND hc.id IS NULL
+         LIMIT 1`,
+      )
+      .all(today, userId) as { id: string; title: string }[];
+
+    for (const h of habits) {
+      if (suggestions.length >= 3) break;
+      suggestions.push({ id: h.id, title: h.title, reason: "Don't break your streak — habit not done today", priority: 'medium', type: 'habit' });
+    }
+  }
+
+  // 5. Contacts overdue for follow-up
+  if (suggestions.length < 3) {
+    const contacts = await db
+      .prepare(
+        `SELECT id, first_name || ' ' || last_name AS title FROM contacts
+         WHERE user_id=? AND next_follow_up IS NOT NULL AND next_follow_up != '' AND next_follow_up <= ?
+         LIMIT 1`,
+      )
+      .all(userId, today) as { id: string; title: string }[];
+
+    for (const c of contacts) {
+      if (suggestions.length >= 3) break;
+      suggestions.push({ id: c.id, title: `Reach out to ${c.title}`, reason: 'Overdue follow-up', priority: 'low', type: 'followup' });
+    }
+  }
+
+  // 6. Tasks due tomorrow (fill remaining slots)
+  if (suggestions.length < 3) {
+    const dueTomorrow = await db
+      .prepare(
+        `SELECT id, title FROM tasks WHERE user_id=? AND completed_at IS NULL AND due_date = ? LIMIT ${3 - suggestions.length}`,
+      )
+      .all(userId, tomorrow) as { id: string; title: string }[];
+
+    for (const t of dueTomorrow) {
+      suggestions.push({ id: t.id, title: t.title, reason: 'Due tomorrow — get ahead of it', priority: 'low', type: 'task' });
+    }
+  }
+
+  res.json(suggestions.slice(0, 3));
+});
+
 // ─── Push Token Registration (Enhancement 7) ─────────────────────────────────
 
 briefingRouter.post('/push-token', async (req: Request, res: Response) => {
