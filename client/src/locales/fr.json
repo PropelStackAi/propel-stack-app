@@ -1,0 +1,134 @@
+{
+  "app": {
+    "name": "Propel Stack AI",
+    "tagline": "Life OS",
+    "loading": "Chargement…",
+    "error": "Une erreur s'est produite",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "submit": "Soumettre",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé",
+    "confirm": "Confirmer",
+    "search": "Rechercher…",
+    "noResults": "Aucun résultat trouvé",
+    "required": "Requis"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "aiAssistant": "Assistant IA",
+    "lifeScore": "Score de Vie",
+    "dailyBriefing": "Briefing Quotidien",
+    "goals": "Objectifs",
+    "journal": "Journal et Humeur",
+    "health": "Centre Santé",
+    "financial": "Centre Financier",
+    "family": "Centre Famille",
+    "documents": "Coffre-fort Documents",
+    "memory": "Santé Mémoire",
+    "settings": "Paramètres",
+    "notifications": "Notifications",
+    "emergency": "Urgence"
+  },
+  "dashboard": {
+    "greeting_morning": "Bonjour",
+    "greeting_afternoon": "Bon après-midi",
+    "greeting_evening": "Bonsoir",
+    "todayBriefing": "Briefing du Jour",
+    "quickCapture": "Capture Rapide",
+    "quickCapturePlaceholder": "Capturez une pensée, tâche ou idée…"
+  },
+  "goals": {
+    "title": "Objectifs",
+    "addGoal": "Ajouter un Objectif",
+    "noGoals": "Aucun objectif pour l'instant. Ajoutez votre premier objectif !",
+    "progress": "Progression",
+    "dueDate": "Date limite",
+    "completed": "Terminé",
+    "active": "Actif"
+  },
+  "journal": {
+    "title": "Journal et Humeur",
+    "newEntry": "Nouvelle Entrée",
+    "mood": "Comment vous sentez-vous ?",
+    "noEntries": "Aucune entrée de journal. Commencez à écrire !"
+  },
+  "health": {
+    "title": "Centre Santé",
+    "steps": "Pas",
+    "sleep": "Sommeil",
+    "heartRate": "Fréquence Cardiaque",
+    "nutrition": "Nutrition",
+    "weight": "Poids",
+    "logHealth": "Enregistrer les Données de Santé"
+  },
+  "memory": {
+    "title": "Santé Mémoire",
+    "noMemories": "Aucun souvenir stocké pour l'instant",
+    "softReset": "Réinitialisation Douce",
+    "fullReset": "Réinitialisation Complète",
+    "softResetDesc": "Marquer cette zone comme obsolète — l'IA mettra à jour sa compréhension",
+    "fullResetDesc": "Effacer toute la mémoire de l'IA et recommencer de zéro"
+  },
+  "financial": {
+    "title": "Centre Financier",
+    "netWorth": "Patrimoine Net",
+    "income": "Revenus",
+    "expenses": "Dépenses",
+    "savings": "Taux d'Épargne",
+    "addAccount": "Ajouter un Compte"
+  },
+  "safety": {
+    "crisis": "Si vous ou quelqu'un que vous connaissez est en crise",
+    "hotline988": "Ligne de Crise — Appelez ou envoyez le 988",
+    "textLine": "Ligne de Texte de Crise — Envoyez HOME au 741741",
+    "emergency": "Services d'Urgence — Appelez le 911"
+  },
+  "nps": {
+    "title": "Vérification rapide",
+    "question": "Comment s'est passée la session d'aujourd'hui ?",
+    "submit": "Soumettre",
+    "sending": "Envoi…",
+    "thanks": "Merci pour votre retour !",
+    "commentPlaceholder": "Qu'est-ce qui pourrait être amélioré ? (optionnel)",
+    "labels": {
+      "1": "Médiocre",
+      "2": "Passable",
+      "3": "Bien",
+      "4": "Très bien",
+      "5": "Excellent"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "addWebhook": "Ajouter un Webhook",
+    "noWebhooks": "Aucun webhook pour l'instant",
+    "test": "Tester",
+    "delete": "Supprimer",
+    "secret": "Secret Webhook — Sauvegarder Maintenant"
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "shortVersion": "La Version Courte"
+  },
+  "plan": {
+    "free": "Gratuit",
+    "solo": "Solo",
+    "family": "Famille",
+    "network": "Réseau",
+    "elite": "Élite",
+    "upgrade": "Mettre à Niveau"
+  },
+  "errors": {
+    "notFound": "Page introuvable",
+    "notFoundDesc": "La page que vous recherchez n'existe pas.",
+    "serverError": "Erreur serveur — veuillez réessayer",
+    "networkError": "Erreur réseau — vérifiez votre connexion"
+  }
+}

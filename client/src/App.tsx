@@ -77,11 +77,12 @@ const ReferralHub        = lazy(() => import('./pages/ReferralHub').then(m => ({
 const PregnancyHub       = lazy(() => import('./pages/PregnancyHub').then(m => ({ default: m.PregnancyHub })));
 const DashboardCustomize = lazy(() => import('./pages/DashboardCustomize').then(m => ({ default: m.DashboardCustomize })));
 
-// ---- Phase 4 — Safety, Privacy, Webhooks, Admin ----
+// ---- Phase 4 — Safety, Privacy, Webhooks, Admin, SSO ----
 const SafetyTrustPolicy  = lazy(() => import('./pages/SafetyTrustPolicy').then(m => ({ default: m.SafetyTrustPolicy })));
 const PrivacyDisclosure  = lazy(() => import('./pages/PrivacyDisclosure').then(m => ({ default: m.PrivacyDisclosure })));
 const WebhookSettingsPage = lazy(() => import('./pages/WebhookSettings').then(m => ({ default: m.WebhookSettingsPage })));
 const SuperDashboard     = lazy(() => import('./pages/admin/SuperDashboard').then(m => ({ default: m.SuperDashboard })));
+const SsoPortal          = lazy(() => import('./pages/SsoPortal').then(m => ({ default: m.SsoPortal })));
 
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
@@ -119,6 +120,9 @@ export function App() {
         <Switch>
           {/* Emergency Mode is intentionally OUTSIDE the layout chrome */}
           <Route path="/emergency" component={EmergencyMode} />
+
+          {/* SSO Partner Portal — outside layout chrome, standalone page */}
+          <Route path="/sso" component={SsoPortal} />
 
           {/* Onboarding wizard — outside layout chrome */}
           <Route path="/onboard" component={Onboarding} />

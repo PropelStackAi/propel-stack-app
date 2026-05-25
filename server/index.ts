@@ -76,6 +76,7 @@ import { webhooksOutboundRouter } from './routes/webhooksOutbound.js';  // Phase
 import { adminDashboardRouter }   from './routes/adminDashboard.js';    // Phase 4 — Admin Super Dashboard
 import { npsRouter }              from './routes/nps.js';               // Phase 4 — NPS Feedback Loop
 import { startChurnPredictionScheduler } from './jobs/churnPrediction.js'; // Phase 4 — Churn Prediction
+import { ssoRouter }              from './routes/sso.js';               // Phase 4 — SSO Partner Portal
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -185,6 +186,7 @@ app.use('/api/tabs',              tabsRouter);             // Customizable Dashb
 app.use('/api/webhooks',          webhooksOutboundRouter); // Phase 4 — Outbound Webhooks
 app.use('/api/admin',             adminDashboardRouter);   // Phase 4 — Admin Super Dashboard
 app.use('/api/nps',               npsRouter);              // Phase 4 — NPS Feedback Loop
+app.use('/api/sso',               ssoRouter);              // Phase 4 — SSO Partner Portal
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

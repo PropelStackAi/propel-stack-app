@@ -1,0 +1,134 @@
+{
+  "app": {
+    "name": "Propel Stack AI",
+    "tagline": "Life OS",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "confirm": "Confirm",
+    "search": "Search…",
+    "noResults": "No results found",
+    "required": "Required"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "aiAssistant": "AI Assistant",
+    "lifeScore": "Life Score",
+    "dailyBriefing": "Daily Briefing",
+    "goals": "Goals",
+    "journal": "Mood & Journal",
+    "health": "Health Hub",
+    "financial": "Financial Hub",
+    "family": "Family Hub",
+    "documents": "Document Vault",
+    "memory": "Memory Health",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "emergency": "Emergency"
+  },
+  "dashboard": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "todayBriefing": "Today's Briefing",
+    "quickCapture": "Quick Capture",
+    "quickCapturePlaceholder": "Capture a thought, task, or idea…"
+  },
+  "goals": {
+    "title": "Goals",
+    "addGoal": "Add Goal",
+    "noGoals": "No goals yet. Add your first goal!",
+    "progress": "Progress",
+    "dueDate": "Due date",
+    "completed": "Completed",
+    "active": "Active"
+  },
+  "journal": {
+    "title": "Mood & Journal",
+    "newEntry": "New Entry",
+    "mood": "How are you feeling?",
+    "noEntries": "No journal entries yet. Start writing!"
+  },
+  "health": {
+    "title": "Health Hub",
+    "steps": "Steps",
+    "sleep": "Sleep",
+    "heartRate": "Heart Rate",
+    "nutrition": "Nutrition",
+    "weight": "Weight",
+    "logHealth": "Log Health Data"
+  },
+  "memory": {
+    "title": "Memory Health",
+    "noMemories": "No memories stored yet",
+    "softReset": "Soft Reset",
+    "fullReset": "Full Reset",
+    "softResetDesc": "Mark this area as outdated — AI will update its understanding",
+    "fullResetDesc": "Clear all AI memory completely and start fresh"
+  },
+  "financial": {
+    "title": "Financial Hub",
+    "netWorth": "Net Worth",
+    "income": "Income",
+    "expenses": "Expenses",
+    "savings": "Savings Rate",
+    "addAccount": "Add Account"
+  },
+  "safety": {
+    "crisis": "If you or someone you know is in crisis",
+    "hotline988": "Suicide & Crisis Lifeline — Call or text 988",
+    "textLine": "Crisis Text Line — Text HOME to 741741",
+    "emergency": "Emergency Services — Call 911"
+  },
+  "nps": {
+    "title": "Quick check-in",
+    "question": "How did today's session feel?",
+    "submit": "Submit",
+    "sending": "Sending…",
+    "thanks": "Thanks for your feedback!",
+    "commentPlaceholder": "What could be better? (optional)",
+    "labels": {
+      "1": "Poor",
+      "2": "Fair",
+      "3": "Good",
+      "4": "Great",
+      "5": "Excellent"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "addWebhook": "Add Webhook",
+    "noWebhooks": "No webhooks yet",
+    "test": "Test",
+    "delete": "Delete",
+    "secret": "Webhook Secret — Save Now"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "shortVersion": "The Short Version"
+  },
+  "plan": {
+    "free": "Free",
+    "solo": "Solo",
+    "family": "Family",
+    "network": "Network",
+    "elite": "Elite",
+    "upgrade": "Upgrade Plan"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "notFoundDesc": "The page you're looking for doesn't exist.",
+    "serverError": "Server error — please try again",
+    "networkError": "Network error — check your connection"
+  }
+}

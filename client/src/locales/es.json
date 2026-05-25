@@ -1,0 +1,134 @@
+{
+  "app": {
+    "name": "Propel Stack AI",
+    "tagline": "Life OS",
+    "loading": "Cargando…",
+    "error": "Algo salió mal",
+    "retry": "Intentar de nuevo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Agregar",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Listo",
+    "confirm": "Confirmar",
+    "search": "Buscar…",
+    "noResults": "No se encontraron resultados",
+    "required": "Requerido"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "aiAssistant": "Asistente IA",
+    "lifeScore": "Puntuación de Vida",
+    "dailyBriefing": "Resumen Diario",
+    "goals": "Metas",
+    "journal": "Diario y Estado de Ánimo",
+    "health": "Centro de Salud",
+    "financial": "Centro Financiero",
+    "family": "Centro Familiar",
+    "documents": "Bóveda de Documentos",
+    "memory": "Salud de Memoria",
+    "settings": "Configuración",
+    "notifications": "Notificaciones",
+    "emergency": "Emergencia"
+  },
+  "dashboard": {
+    "greeting_morning": "Buenos días",
+    "greeting_afternoon": "Buenas tardes",
+    "greeting_evening": "Buenas noches",
+    "todayBriefing": "Resumen de Hoy",
+    "quickCapture": "Captura Rápida",
+    "quickCapturePlaceholder": "Captura un pensamiento, tarea o idea…"
+  },
+  "goals": {
+    "title": "Metas",
+    "addGoal": "Agregar Meta",
+    "noGoals": "Sin metas aún. ¡Agrega tu primera meta!",
+    "progress": "Progreso",
+    "dueDate": "Fecha límite",
+    "completed": "Completado",
+    "active": "Activo"
+  },
+  "journal": {
+    "title": "Diario y Estado de Ánimo",
+    "newEntry": "Nueva Entrada",
+    "mood": "¿Cómo te sientes?",
+    "noEntries": "Sin entradas de diario aún. ¡Comienza a escribir!"
+  },
+  "health": {
+    "title": "Centro de Salud",
+    "steps": "Pasos",
+    "sleep": "Sueño",
+    "heartRate": "Frecuencia Cardíaca",
+    "nutrition": "Nutrición",
+    "weight": "Peso",
+    "logHealth": "Registrar Datos de Salud"
+  },
+  "memory": {
+    "title": "Salud de Memoria",
+    "noMemories": "No hay memorias almacenadas aún",
+    "softReset": "Reinicio Suave",
+    "fullReset": "Reinicio Completo",
+    "softResetDesc": "Marcar esta área como desactualizada — la IA actualizará su comprensión",
+    "fullResetDesc": "Borrar toda la memoria de IA y comenzar de nuevo"
+  },
+  "financial": {
+    "title": "Centro Financiero",
+    "netWorth": "Patrimonio Neto",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "savings": "Tasa de Ahorro",
+    "addAccount": "Agregar Cuenta"
+  },
+  "safety": {
+    "crisis": "Si tú o alguien que conoces está en crisis",
+    "hotline988": "Línea de Crisis — Llama o envía texto al 988",
+    "textLine": "Línea de Texto de Crisis — Envía HOLA al 741741",
+    "emergency": "Servicios de Emergencia — Llama al 911"
+  },
+  "nps": {
+    "title": "Control rápido",
+    "question": "¿Cómo se sintió la sesión de hoy?",
+    "submit": "Enviar",
+    "sending": "Enviando…",
+    "thanks": "¡Gracias por tu opinión!",
+    "commentPlaceholder": "¿Qué podría mejorar? (opcional)",
+    "labels": {
+      "1": "Malo",
+      "2": "Regular",
+      "3": "Bueno",
+      "4": "Muy bueno",
+      "5": "Excelente"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "addWebhook": "Agregar Webhook",
+    "noWebhooks": "Sin webhooks aún",
+    "test": "Probar",
+    "delete": "Eliminar",
+    "secret": "Secreto de Webhook — Guardar Ahora"
+  },
+  "privacy": {
+    "title": "Política de Privacidad",
+    "shortVersion": "La Versión Corta"
+  },
+  "plan": {
+    "free": "Gratis",
+    "solo": "Individual",
+    "family": "Familiar",
+    "network": "Red",
+    "elite": "Élite",
+    "upgrade": "Actualizar Plan"
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "notFoundDesc": "La página que buscas no existe.",
+    "serverError": "Error del servidor — por favor intenta de nuevo",
+    "networkError": "Error de red — verifica tu conexión"
+  }
+}
