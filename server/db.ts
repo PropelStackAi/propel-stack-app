@@ -3218,6 +3218,27 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_admin_audit_log_at ON admin_audit_log(created_at DESC);
     `,
   },
+
+  // v118 — Phase 3 Step 8: push_tokens table for FCM/APNs
+  {
+    version: 118,
+    name: 'push_tokens',
+    sql: `
+      CREATE TABLE IF NOT EXISTS push_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,
+        platform TEXT NOT NULL CHECK (platform IN ('ios', 'android', 'web')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_push_tokens_user ON push_tokens(user_id);
+
+      -- Phase 3 Step 10: billing_period column on users
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS billing_period TEXT NOT NULL DEFAULT 'monthly';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

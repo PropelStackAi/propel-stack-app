@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 import { buildMemoryContext, logEpisodic } from '../lib/memoryStore.js'; // Enhancement 1-2
+import { predictNextTask, shouldPredict, recordPrediction } from '../services/taskPredictor.js'; // Phase 3 Step 2
 import {
   ANTI_TOXIC_GUARDRAIL,
   HALLUCINATION_GUARD_FINANCE,
@@ -35,14 +36,68 @@ export const assistantRouter = Router();
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 async function getConversation(id: string, userId: string) {
-  return db.prepare('SELECT * FROM ai_conversations WHERE id = ? AND user_id = ?').get(id, userId) as
+  return db.prepare('SELECT * FROM ai_conversations WHERE id = ? AND user_id = ?').get(id, userId) as unknown as
     | Record<string, unknown>
     | undefined;
 }
 
+// ---- Session start — fires predictive task surfacing (Phase 3 Step 2) ----
+assistantRouter.post('/session-start', async (_req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  if (!shouldPredict(userId)) {
+    return res.json({ prediction: null });
+  }
+  const prediction = await predictNextTask(userId);
+  if (prediction) recordPrediction(userId, prediction);
+  res.json({ prediction });
+});
+
 // ---- Usage ----
 assistantRouter.get('/usage', (_req: Request, res: Response) => {
   res.json(getUsage(getCurrentUserId()));
+});
+
+// ---- Token Budget (Phase 2 Step 11 — TokenUsage component) ----
+assistantRouter.get('/token-budget', async (_req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const base = getUsage(userId);
+
+  // Approximate breakdown by feature from ai_message_log (if exists) or fallback
+  let breakdown = { ai_chat: 0, morning_briefing: 0, weekly_review: 0, background_analysis: 0 };
+  try {
+    // If the message log table exists, break down by source
+    const rows = await db
+      .prepare(`SELECT source, SUM(tokens_total) as t FROM ai_message_log WHERE user_id = ? GROUP BY source`)
+      .all(userId) as { source: string; t: number }[];
+
+    for (const r of rows) {
+      if (r.source === 'morning_briefing')   breakdown.morning_briefing   = r.t;
+      else if (r.source === 'weekly_review') breakdown.weekly_review      = r.t;
+      else if (r.source === 'background')    breakdown.background_analysis = r.t;
+      else                                   breakdown.ai_chat            += r.t;
+    }
+  } catch {
+    // Table doesn't exist yet — distribute usage proportionally (70/15/10/5)
+    const u = base.used;
+    breakdown = {
+      ai_chat:            Math.round(u * 0.70),
+      morning_briefing:   Math.round(u * 0.15),
+      weekly_review:      Math.round(u * 0.10),
+      background_analysis: Math.round(u * 0.05),
+    };
+  }
+
+  const burnRatePerDay = base.used / Math.max(1, new Date().getDate());
+  const daysRemaining  = burnRatePerDay > 0 ? Math.round(base.remaining / burnRatePerDay) : 999;
+
+  res.json({
+    used: base.used,
+    budget: base.budget,
+    plan: base.planTier,
+    burn_rate_per_day: Math.round(burnRatePerDay),
+    days_remaining: Math.min(daysRemaining, 99),
+    breakdown,
+  });
 });
 
 // ---- Conversations ----

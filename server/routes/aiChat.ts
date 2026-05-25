@@ -6,8 +6,12 @@ import { db, getCurrentUserId } from '../db.js';
 import { randomUUID } from 'node:crypto';
 import { complete } from '../ai-gateway.js';
 import { buildMemoryContext } from '../lib/memoryStore.js';
+import { sentimentMiddleware } from '../middleware/sentiment.js'; // Phase 2 Step 7
 
 export const aiChatRouter = Router();
+
+// Apply sentiment middleware to all message endpoints (crisis detection + compassionate mode)
+aiChatRouter.use('/threads/:id/messages', sentimentMiddleware);
 
 // ─── GET /api/ai-chat/threads — list threads ─────────────────────────────────
 aiChatRouter.get('/threads', async (_req: Request, res: Response) => {

@@ -77,6 +77,8 @@ import { adminDashboardRouter }   from './routes/adminDashboard.js';    // Phase
 import { npsRouter }              from './routes/nps.js';               // Phase 4 — NPS Feedback Loop
 import { startChurnPredictionScheduler } from './jobs/churnPrediction.js'; // Phase 4 — Churn Prediction
 import { ssoRouter }              from './routes/sso.js';               // Phase 4 — SSO Partner Portal
+import { billingRouter }          from './routes/billing.js';            // Phase 3 Step 10 — Billing Checkout
+import { pushTokensRouter }       from './routes/pushTokens.js';         // Phase 3 Step 8 — Push Token Registry
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -98,7 +100,7 @@ app.use(cors({
 app.use(helmet({ crossOriginEmbedderPolicy: false }));
 
 // Raw body for Stripe webhooks must come before express.json()
-app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }), billingRouter);
 app.use(express.json({ limit: '10mb' }));
 
 // ---- Health ----
@@ -187,6 +189,8 @@ app.use('/api/webhooks',          webhooksOutboundRouter); // Phase 4 — Outbou
 app.use('/api/admin',             adminDashboardRouter);   // Phase 4 — Admin Super Dashboard
 app.use('/api/nps',               npsRouter);              // Phase 4 — NPS Feedback Loop
 app.use('/api/sso',               ssoRouter);              // Phase 4 — SSO Partner Portal
+app.use('/api/billing',           billingRouter);          // Phase 3 Step 10 — Billing Checkout & Portal
+app.use('/api/push-tokens',       pushTokensRouter);       // Phase 3 Step 8 — Push Token Registry
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
