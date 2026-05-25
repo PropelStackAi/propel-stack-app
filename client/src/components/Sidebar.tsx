@@ -17,7 +17,7 @@ import {
   MessageCircle, FileText, Shield, Plug, Lock, Brain,
   Settings, Bell, ChevronDown, type LucideIcon,
   NotebookPen, CalendarClock, MessageSquare, Info,
-  Gift, ShieldAlert,
+  Gift, ShieldAlert, Webhook, ShieldCheck, FileSearch,
 } from 'lucide-react';
 import { useUnreadCount } from '../features/notifications/api';
 
@@ -115,8 +115,11 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/memory',           label: 'Memory Health',    icon: Brain         },
       { href: '/privacy',          label: 'Privacy & Data',   icon: Lock          },
       { href: '/settings/privacy', label: 'Privacy Settings', icon: Info          },
-      { href: '/referral',           label: 'Refer Friends',     icon: Gift               },
+      { href: '/referral',           label: 'Refer Friends',       icon: Gift               },
       { href: '/dashboard/customize', label: 'Customize Dashboard', icon: SlidersHorizontal },
+      { href: '/webhooks',           label: 'Webhooks',             icon: Webhook            },
+      { href: '/safety',             label: 'Safety & Trust',       icon: ShieldCheck        },
+      { href: '/privacy-policy',     label: 'Privacy Policy',       icon: FileSearch         },
     ],
   },
 ];

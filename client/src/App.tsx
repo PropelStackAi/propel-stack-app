@@ -77,6 +77,12 @@ const ReferralHub        = lazy(() => import('./pages/ReferralHub').then(m => ({
 const PregnancyHub       = lazy(() => import('./pages/PregnancyHub').then(m => ({ default: m.PregnancyHub })));
 const DashboardCustomize = lazy(() => import('./pages/DashboardCustomize').then(m => ({ default: m.DashboardCustomize })));
 
+// ---- Phase 4 — Safety, Privacy, Webhooks, Admin ----
+const SafetyTrustPolicy  = lazy(() => import('./pages/SafetyTrustPolicy').then(m => ({ default: m.SafetyTrustPolicy })));
+const PrivacyDisclosure  = lazy(() => import('./pages/PrivacyDisclosure').then(m => ({ default: m.PrivacyDisclosure })));
+const WebhookSettingsPage = lazy(() => import('./pages/WebhookSettings').then(m => ({ default: m.WebhookSettingsPage })));
+const SuperDashboard     = lazy(() => import('./pages/admin/SuperDashboard').then(m => ({ default: m.SuperDashboard })));
+
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
@@ -191,6 +197,11 @@ export function App() {
                   {/* New spec enhancements */}
                   <Route path="/pregnancy"           component={PregnancyHub} />
                   <Route path="/dashboard/customize" component={DashboardCustomize} />
+                  {/* Phase 4 — Safety, Privacy, Webhooks, Admin */}
+                  <Route path="/safety"          component={SafetyTrustPolicy} />
+                  <Route path="/privacy-policy"  component={PrivacyDisclosure} />
+                  <Route path="/webhooks"        component={WebhookSettingsPage} />
+                  <Route path="/admin"           component={SuperDashboard} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

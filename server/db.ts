@@ -3126,6 +3126,98 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       );
     `,
   },
+
+  // ─── Phase 4: Outbound Webhooks ───────────────────────────────────────────
+  {
+    version: 114,
+    name: 'user_webhooks',
+    sql: `
+      CREATE TABLE IF NOT EXISTS user_webhooks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        url TEXT NOT NULL,
+        secret TEXT NOT NULL,
+        events JSONB NOT NULL DEFAULT '[]',
+        description TEXT NOT NULL DEFAULT '',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        failure_count INTEGER NOT NULL DEFAULT 0,
+        last_triggered_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_webhooks_user ON user_webhooks(user_id, is_active);
+    `,
+  },
+
+  // ─── Phase 4: Churn Prediction signals ───────────────────────────────────
+  {
+    version: 115,
+    name: 'churn_signals',
+    sql: `
+      CREATE TABLE IF NOT EXISTS churn_signals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        signal_type TEXT NOT NULL,
+        signal_value REAL NOT NULL DEFAULT 0,
+        recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_churn_signals_user ON churn_signals(user_id, recorded_at DESC);
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS churn_risk_score INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS churn_intervention_sent_at TIMESTAMPTZ;
+    `,
+  },
+
+  // ─── Phase 4: NPS / In-App Feedback Loop ─────────────────────────────────
+  {
+    version: 116,
+    name: 'nps_responses',
+    sql: `
+      CREATE TABLE IF NOT EXISTS nps_responses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        score INTEGER NOT NULL CHECK (score BETWEEN 1 AND 5),
+        comment TEXT,
+        context TEXT NOT NULL DEFAULT 'general',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_nps_user ON nps_responses(user_id, created_at DESC);
+    `,
+  },
+
+  // ─── Phase 4: White-label Partner Scaffold ────────────────────────────────
+  {
+    version: 117,
+    name: 'white_label_partners',
+    sql: `
+      CREATE TABLE IF NOT EXISTS white_label_partners (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        plan TEXT NOT NULL DEFAULT 'advisor' CHECK (plan IN ('advisor','agency','firm','enterprise')),
+        max_users INTEGER NOT NULL DEFAULT 50,
+        sso_enabled BOOLEAN NOT NULL DEFAULT false,
+        dpa_signed BOOLEAN NOT NULL DEFAULT false,
+        dpa_signed_at TIMESTAMPTZ,
+        logo_url TEXT,
+        primary_color TEXT NOT NULL DEFAULT '#4F35C2',
+        default_plan TEXT NOT NULL DEFAULT 'solo',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS admin_audit_log (
+        id TEXT PRIMARY KEY,
+        actor_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target_type TEXT,
+        target_id TEXT,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_log_at ON admin_audit_log(created_at DESC);
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

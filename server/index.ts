@@ -69,9 +69,13 @@ import { energyRouter }          from './routes/energy.js';          // Enhancem
 import { burnoutRouter }         from './routes/burnout.js';         // Enhancement 26 — Burnout Pattern Detection
 import { referralRouter }        from './routes/referral.js';        // Enhancement 30 — Referral Loop
 import { featureFlagsRouter }    from './routes/featureFlags.js';    // Enhancement 32 — A/B Testing Scaffold
-import { pregnancyRouter }       from './routes/pregnancy.js';       // Pregnancy & Motherhood Hub
-import { dashboardConfigRouter } from './routes/dashboardConfig.js'; // AM Dashboard Widget Config
-import { tabsRouter }            from './routes/tabs.js';             // Customizable Dashboard Tabs
+import { pregnancyRouter }         from './routes/pregnancy.js';         // Pregnancy & Motherhood Hub
+import { dashboardConfigRouter }  from './routes/dashboardConfig.js';  // AM Dashboard Widget Config
+import { tabsRouter }             from './routes/tabs.js';              // Customizable Dashboard Tabs
+import { webhooksOutboundRouter } from './routes/webhooksOutbound.js';  // Phase 4 — Outbound Webhooks
+import { adminDashboardRouter }   from './routes/adminDashboard.js';    // Phase 4 — Admin Super Dashboard
+import { npsRouter }              from './routes/nps.js';               // Phase 4 — NPS Feedback Loop
+import { startChurnPredictionScheduler } from './jobs/churnPrediction.js'; // Phase 4 — Churn Prediction
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -175,9 +179,12 @@ app.use('/api/energy',            energyRouter);          // Enhancement 25 — 
 app.use('/api/burnout',           burnoutRouter);         // Enhancement 26 — Burnout Pattern Detection
 app.use('/api/referral',          referralRouter);        // Enhancement 30 — Referral Loop
 app.use('/api/flags',             featureFlagsRouter);    // Enhancement 32 — Feature Flags & A/B Testing
-app.use('/api/pregnancy',         pregnancyRouter);       // Pregnancy & Motherhood Hub
-app.use('/api/dashboard-config',  dashboardConfigRouter); // AM Dashboard Widget Config
-app.use('/api/tabs',              tabsRouter);            // Customizable Dashboard Tabs
+app.use('/api/pregnancy',         pregnancyRouter);         // Pregnancy & Motherhood Hub
+app.use('/api/dashboard-config',  dashboardConfigRouter);  // AM Dashboard Widget Config
+app.use('/api/tabs',              tabsRouter);             // Customizable Dashboard Tabs
+app.use('/api/webhooks',          webhooksOutboundRouter); // Phase 4 — Outbound Webhooks
+app.use('/api/admin',             adminDashboardRouter);   // Phase 4 — Admin Super Dashboard
+app.use('/api/nps',               npsRouter);              // Phase 4 — NPS Feedback Loop
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
@@ -202,9 +209,10 @@ initDb()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`[server] listening on http://localhost:${PORT}`);
-      startMemoryAnalysisScheduler(); // Enhancement 3: Longitudinal Trend Detection
+      startMemoryAnalysisScheduler();    // Enhancement 3: Longitudinal Trend Detection
       startBriefingScheduler();         // Enhancement 7-8: Morning Briefing + Weekly Review
-      startReEngagementScheduler();    // Enhancement 11: 72-Hour Re-Engagement Flow
+      startReEngagementScheduler();     // Enhancement 11: 72-Hour Re-Engagement Flow
+      startChurnPredictionScheduler();  // Phase 4 Enhancement 38: Churn Prediction
     });
   })
   .catch((err) => {

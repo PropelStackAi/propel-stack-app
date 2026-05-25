@@ -15,6 +15,7 @@ import { NotNowBanner } from './NotNowBanner'; // Enhancement 17
 import { SyncIndicator } from './SyncIndicator'; // Session 14 Enhancement 8
 import { ThemeProvider } from '../lib/theme'; // Enhancement 27
 import { ThemeToggle } from './ThemeToggle';   // Enhancement 27
+import { NpsPrompt } from './NpsPrompt';        // Phase 4 Enhancement 39
 
 interface User {
   id: string;
@@ -116,6 +117,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Quick capture (floating, all breakpoints) */}
       <QuickCapture />
+
+      {/* NPS / In-App Feedback Prompt — Phase 4 Enhancement 39 */}
+      <NpsPrompt />
     </div>
     </ThemeProvider>
   );
