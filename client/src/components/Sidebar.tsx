@@ -17,6 +17,7 @@ import {
   MessageCircle, FileText, Shield, Plug, Lock, Brain,
   Settings, Bell, ChevronDown, type LucideIcon,
   NotebookPen, CalendarClock, MessageSquare, Info,
+  Gift, ShieldAlert,
 } from 'lucide-react';
 import { useUnreadCount } from '../features/notifications/api';
 
@@ -54,10 +55,12 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'health',
     label: 'HEALTH',
     items: [
-      { href: '/health',   label: 'Health Hub',   icon: Heart    },
-      { href: '/sleep',    label: 'Sleep Coach',  icon: Moon     },
-      { href: '/athlete',  label: 'Athlete Hub',  icon: Zap      },
-      { href: '/student',  label: 'Student Mode', icon: BookOpen },
+      { href: '/health',   label: 'Health Hub',      icon: Heart      },
+      { href: '/sleep',    label: 'Sleep Coach',      icon: Moon       },
+      { href: '/athlete',  label: 'Athlete Hub',      icon: Zap        },
+      { href: '/student',  label: 'Student Mode',     icon: BookOpen   },
+      { href: '/energy',   label: 'Energy Scheduler', icon: Zap        },
+      { href: '/burnout',  label: 'Burnout Insights', icon: ShieldAlert},
     ],
   },
   {
@@ -111,6 +114,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/memory',           label: 'Memory Health',    icon: Brain         },
       { href: '/privacy',          label: 'Privacy & Data',   icon: Lock          },
       { href: '/settings/privacy', label: 'Privacy Settings', icon: Info          },
+      { href: '/referral',         label: 'Refer Friends',    icon: Gift          },
     ],
   },
 ];

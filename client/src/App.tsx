@@ -68,6 +68,11 @@ const WidgetSettings     = lazy(() => import('./pages/WidgetSettings').then(m =>
 const CalendarHub        = lazy(() => import('./pages/CalendarHub').then(m => ({ default: m.CalendarHub })));
 const FinancialScore     = lazy(() => import('./pages/FinancialScore').then(m => ({ default: m.FinancialScore })));
 
+// ---- Tier 2 Enhancements 23-32 ----
+const EnergyScheduler    = lazy(() => import('./pages/EnergyScheduler').then(m => ({ default: m.EnergyScheduler })));
+const BurnoutInsights    = lazy(() => import('./pages/BurnoutInsights').then(m => ({ default: m.BurnoutInsights })));
+const ReferralHub        = lazy(() => import('./pages/ReferralHub').then(m => ({ default: m.ReferralHub })));
+
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
@@ -175,6 +180,10 @@ export function App() {
                   <Route path="/events" component={EventsTimeline} />
                   <Route path="/privacy" component={PrivacyVault} />
                   <Route path="/chat" component={AIChat} />
+                  {/* Tier 2 Enhancements 23-32 */}
+                  <Route path="/energy"   component={EnergyScheduler} />
+                  <Route path="/burnout"  component={BurnoutInsights} />
+                  <Route path="/referral" component={ReferralHub} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

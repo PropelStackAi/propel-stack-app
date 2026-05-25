@@ -13,6 +13,8 @@ import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
 import { NotNowBanner } from './NotNowBanner'; // Enhancement 17
 import { SyncIndicator } from './SyncIndicator'; // Session 14 Enhancement 8
+import { ThemeProvider } from '../lib/theme'; // Enhancement 27
+import { ThemeToggle } from './ThemeToggle';   // Enhancement 27
 
 interface User {
   id: string;
@@ -46,6 +48,7 @@ function MobileHeader({ user }: { user?: User }) {
       </Link>
       <div className="flex items-center gap-2">
         <SyncIndicator />
+        <ThemeToggle compact />
         {user && (
           <div
             className="w-8 h-8 rounded-full bg-brand-indigo text-white grid place-items-center font-semibold text-sm"
@@ -74,7 +77,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }, [user]);
 
   return (
-    <div className="min-h-screen flex bg-surface">
+    <ThemeProvider>
+    <div className="min-h-screen flex bg-surface dark:bg-[#0F0A2E]">
       {/* Skip link */}
       <a
         href="#main-content"
@@ -113,5 +117,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Quick capture (floating, all breakpoints) */}
       <QuickCapture />
     </div>
+    </ThemeProvider>
   );
 }

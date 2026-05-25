@@ -124,6 +124,27 @@ settingsRouter.post('/family-sharing', async (req: Request, res: Response) => {
   res.json({ enabled, ok: true });
 });
 
+// ─── Theme Preference (Enhancement 27 — Dark Mode) ───────────────────────────
+
+settingsRouter.get('/theme', async (_req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const user = await db
+    .prepare('SELECT theme_preference FROM users WHERE id = ?')
+    .get(userId) as { theme_preference: string } | undefined;
+  res.json({ theme: user?.theme_preference ?? 'system' });
+});
+
+settingsRouter.post('/theme', async (req: Request, res: Response) => {
+  const userId = getCurrentUserId();
+  const { theme } = req.body ?? {};
+  const VALID_THEMES = ['light', 'dark', 'system'];
+  if (!VALID_THEMES.includes(theme)) {
+    return res.status(400).json({ error: 'theme must be light, dark, or system' });
+  }
+  await db.prepare('UPDATE users SET theme_preference = ? WHERE id = ?').run(theme, userId);
+  res.json({ theme, ok: true });
+});
+
 // ─── Utility: check if user is in Not Now mode (used by jobs) ────────────────
 
 export async function isUserInNotNowMode(userId: string): Promise<boolean> {

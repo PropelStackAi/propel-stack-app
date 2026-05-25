@@ -2911,6 +2911,135 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_recap_user ON weekly_recaps(user_id, week_start DESC);
     `,
   },
+
+  // ─── Tier 2 Enhancement 27 — Dark Mode (theme preference) ───────────────────
+  {
+    version: 106,
+    name: 'theme_preference',
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT NOT NULL DEFAULT 'system';
+    `,
+  },
+
+  // ─── Tier 2 Enhancement 25 — Energy-Aware Scheduling ────────────────────────
+  {
+    version: 107,
+    name: 'energy_ratings',
+    sql: `
+      CREATE TABLE IF NOT EXISTS energy_ratings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        energy_level INTEGER NOT NULL CHECK (energy_level BETWEEN 1 AND 5),
+        energy_type TEXT NOT NULL DEFAULT 'general',
+        noted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_energy_user ON energy_ratings(user_id, noted_at DESC);
+      CREATE TABLE IF NOT EXISTS energy_profiles (
+        user_id TEXT PRIMARY KEY,
+        peak_hours TEXT NOT NULL DEFAULT '[]',
+        low_hours TEXT NOT NULL DEFAULT '[]',
+        dominant_type TEXT NOT NULL DEFAULT 'general',
+        last_computed TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
+  // ─── Tier 2 Enhancement 26 — Burnout Pattern Detection ──────────────────────
+  {
+    version: 108,
+    name: 'burnout_signals',
+    sql: `
+      CREATE TABLE IF NOT EXISTS burnout_signals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        signal_type TEXT NOT NULL,
+        value REAL NOT NULL,
+        signal_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        raw_data TEXT NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_burnout_user ON burnout_signals(user_id, signal_date DESC);
+      CREATE TABLE IF NOT EXISTS burnout_interventions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        risk_score REAL NOT NULL,
+        intervention_text TEXT NOT NULL,
+        dismissed BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `,
+  },
+
+  // ─── Tier 2 Enhancement 30 — Referral Loop ───────────────────────────────────
+  {
+    version: 109,
+    name: 'referral_codes',
+    sql: `
+      CREATE TABLE IF NOT EXISTS referral_codes (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        code TEXT NOT NULL UNIQUE,
+        credits_earned INTEGER NOT NULL DEFAULT 0,
+        conversions INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_referral_code ON referral_codes(code);
+      CREATE TABLE IF NOT EXISTS referral_conversions (
+        id TEXT PRIMARY KEY,
+        referral_code TEXT NOT NULL,
+        referrer_user_id TEXT NOT NULL,
+        converted_user_id TEXT NOT NULL,
+        converted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        credit_amount INTEGER NOT NULL DEFAULT 500
+      );
+    `,
+  },
+
+  // ─── Tier 2 Enhancement 32 — A/B Testing Scaffold ───────────────────────────
+  {
+    version: 110,
+    name: 'feature_flags',
+    sql: `
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        flag_key TEXT PRIMARY KEY,
+        enabled BOOLEAN NOT NULL DEFAULT true,
+        rollout_pct INTEGER NOT NULL DEFAULT 100,
+        description TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS ab_experiments (
+        exp_key TEXT PRIMARY KEY,
+        variant_a TEXT NOT NULL,
+        variant_b TEXT NOT NULL,
+        traffic_split INTEGER NOT NULL DEFAULT 50,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        ended_at TIMESTAMPTZ
+      );
+      CREATE TABLE IF NOT EXISTS user_flag_assignments (
+        user_id TEXT NOT NULL,
+        flag_key TEXT NOT NULL,
+        variant TEXT NOT NULL DEFAULT 'control',
+        assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, flag_key)
+      );
+      -- Seed default feature flags
+      INSERT INTO feature_flags (flag_key, enabled, rollout_pct, description)
+      VALUES
+        ('dark_mode',           true,  100, 'Dark mode theme toggle'),
+        ('energy_scheduling',   true,  100, 'Energy-aware scheduling'),
+        ('burnout_detection',   true,  100, 'Burnout pattern detection'),
+        ('referral_loop',       true,  100, 'Referral loop and credit system'),
+        ('model_routing_v2',    true,  100, 'Enhanced model routing intelligence'),
+        ('confidence_scoring',  true,  100, 'AI confidence scoring + hedge phrases')
+      ON CONFLICT DO NOTHING;
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {
