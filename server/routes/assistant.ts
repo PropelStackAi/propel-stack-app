@@ -3,6 +3,14 @@ import { db, getCurrentUserId } from '../db.js';
 import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
 import { buildMemoryContext, logEpisodic } from '../lib/memoryStore.js'; // Enhancement 1-2
 import {
+  ANTI_TOXIC_GUARDRAIL,
+  HALLUCINATION_GUARD_FINANCE,
+  HALLUCINATION_GUARD_RESEARCH,
+  scrubToxicLanguage,
+  addHallucinationCaveats,
+  checkMessageSafety,
+} from '../lib/safetyScanner.js'; // Enhancement 13-16
+import {
   complete,
   estimateCost,
   getUsage,
@@ -140,13 +148,39 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   );
   send('user', { id: userMsgId });
 
+  // Enhancement 15-16: Safety scan before AI call
+  const safetyCheck = checkMessageSafety(message);
+  if (safetyCheck.action === 'crisis') {
+    send('crisis', {
+      topic: safetyCheck.topic,
+      softResponse: safetyCheck.softResponse,
+      resources: safetyCheck.resources,
+    });
+    logEpisodic(userId, `[SAFETY] Crisis signal detected in message — escalated to resources`, 'safety').catch(() => {});
+    return res.end();
+  }
+
   // Enhancement 2: Cross-Session Context Stitching — prepend memory context to every conversation
   const memCtx = await buildMemoryContext(userId).catch(() => '');
+
+  // Enhancement 13: Anti-Toxic Productivity Guardrail
+  // Enhancement 14: Hallucination Guard (finance/research modes)
+  const hallucinationGuard =
+    mode === 'finance' ? HALLUCINATION_GUARD_FINANCE
+    : mode === 'research' ? HALLUCINATION_GUARD_RESEARCH
+    : '';
+
+  // Enhancement 15: Sensitive topic — append soft guidance
+  const sensitiveGuidance = safetyCheck.action === 'sensitive'
+    ? `\nSensitivity note: the user may be dealing with ${safetyCheck.topic?.replace(/_/g, ' ')}. Be especially empathetic, non-judgmental, and suggest professional resources if appropriate.\n`
+    : '';
+
   const baseSystemPrompt =
     mode === 'finance'
-      ? 'You provide general financial education only. Never give personalized advice. Recommend a licensed professional.'
-      : 'You are a proactive Life OS assistant. Be concise, warm, and action-oriented.';
-  const systemPromptWithMemory = memCtx + baseSystemPrompt;
+      ? `You provide general financial education only. Never give personalized advice. Recommend a licensed professional. ${hallucinationGuard}`
+      : `You are a proactive Life OS assistant. Be concise, warm, and action-oriented. ${hallucinationGuard}${sensitiveGuidance}`;
+
+  const systemPromptWithMemory = ANTI_TOXIC_GUARDRAIL + memCtx + baseSystemPrompt;
 
   let result;
   try {
@@ -165,10 +199,19 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
     return res.end();
   }
 
+  // Enhancement 13: Scrub toxic language from response
+  // Enhancement 14: Add hallucination caveats where needed
+  const safeText = addHallucinationCaveats(scrubToxicLanguage(result.text), mode);
+
+  // Append sensitive topic resources if detected
+  const finalText = safetyCheck.action === 'sensitive' && safetyCheck.resources.length > 0
+    ? safeText + `\n\n---\n**If you need support:** ${safetyCheck.resources.join(' | ')}`
+    : safeText;
+
   let closed = false;
   req.on('close', () => { closed = true; });
 
-  const tokens = result.text.split(/(\s+)/);
+  const tokens = finalText.split(/(\s+)/);
   for (const t of tokens) {
     if (closed) break;
     if (t) send('token', { t });
@@ -178,7 +221,7 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   const asstId = newId();
   await db.prepare(
     'INSERT INTO ai_messages (id, conversation_id, user_id, role, content, tokens_in, tokens_out, model) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-  ).run(asstId, conversationId, userId, 'assistant', result.text, result.tokensIn, result.tokensOut, result.model);
+  ).run(asstId, conversationId, userId, 'assistant', finalText, result.tokensIn, result.tokensOut, result.model);
   await db.prepare('UPDATE ai_conversations SET updated_at = NOW() WHERE id = ?').run(conversationId);
 
   // Enhancement 1: Log this exchange as an episodic memory for future context stitching

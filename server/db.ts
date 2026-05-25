@@ -2559,6 +2559,15 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 17: "Not Now" Mode ─────────────────────────────────────────
+  {
+    version: 97,
+    name: 'not_now_mode',
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS not_now_until TIMESTAMPTZ;
+    `,
+  },
+
   // ─── Enhancement 7-8: Morning Briefings + Weekly Life Review ─────────────────
   {
     version: 94,

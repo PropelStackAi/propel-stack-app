@@ -11,6 +11,7 @@ import { apiRequest } from '../lib/apiRequest';
 import { QuickCapture } from '../features/dashboard/components/QuickCapture';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
+import { NotNowBanner } from './NotNowBanner'; // Enhancement 17
 
 interface User {
   id: string;
@@ -86,6 +87,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar (hidden on desktop) */}
         <MobileHeader user={user} />
+
+        {/* Not Now banner (Enhancement 17) — shows full-width when DND is active */}
+        <NotNowBanner />
 
         {/* Main content */}
         <main

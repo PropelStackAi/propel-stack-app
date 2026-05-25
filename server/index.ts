@@ -58,6 +58,7 @@ import { onboardingRouter }  from './routes/onboarding.js';   // Enhancement 4-6
 import { briefingRouter }    from './routes/briefing.js';     // Enhancement 7-8: Briefing & Weekly Review
 import { startBriefingScheduler } from './jobs/briefingJob.js'; // Enhancement 7-8
 import { startReEngagementScheduler } from './jobs/reEngagementJob.js'; // Enhancement 11
+import { settingsRouter }         from './routes/settings.js';          // Enhancement 17
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -152,6 +153,7 @@ app.use('/api/network',      networkHubRouter);   // Network Hub
 app.use('/api/memory',       memoryRouter);       // Enhancement 1-3: Three-Tier Memory System
 app.use('/api/onboarding',   onboardingRouter);   // Enhancement 4-6: Onboarding
 app.use('/api/briefing',     briefingRouter);     // Enhancement 7-8: Briefing & Weekly Review
+app.use('/api/settings',     settingsRouter);     // Enhancement 17: Settings (Not Now Mode)
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

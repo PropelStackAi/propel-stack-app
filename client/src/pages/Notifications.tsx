@@ -1,9 +1,55 @@
 // ─── Smart Notification Intelligence — Page ───────────────────────────────────
-// Enhancement 17 — Propel Stack AI, LLC
+// Propel Stack AI, LLC
 
 import { useState } from 'react';
+import { BellOff } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '../lib/apiRequest';
 import { NotificationFeed } from '../features/notifications/components/NotificationFeed';
 import { NotificationSettings } from '../features/notifications/components/NotificationSettings';
+
+interface NotNowStatus { active: boolean; until: string | null; untilFormatted: string | null; }
+type Duration = '1h' | '4h' | '8h' | 'tomorrow';
+const DURATIONS: { value: Duration; label: string }[] = [
+  { value: '1h',       label: '1 hour'    },
+  { value: '4h',       label: '4 hours'   },
+  { value: '8h',       label: '8 hours'   },
+  { value: 'tomorrow', label: 'Tomorrow'  },
+];
+
+function NotNowToggle() {
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ['settings', 'not-now'], queryFn: () => apiRequest<NotNowStatus>('/api/settings/not-now'), staleTime: 2 * 60_000 });
+  const activate = useMutation({ mutationFn: (d: Duration) => apiRequest('/api/settings/not-now', { method: 'POST', body: { duration: d } }), onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'not-now'] }) });
+  const deactivate = useMutation({ mutationFn: () => apiRequest('/api/settings/not-now', { method: 'DELETE' }), onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'not-now'] }) });
+
+  return (
+    <div className="card">
+      <div className="flex items-center gap-2 mb-2">
+        <BellOff size={15} color={data?.active ? '#F05A28' : '#9CA3AF'} />
+        <h3 className="font-display font-bold text-sm text-surface-ink">Not Now Mode</h3>
+        {data?.active && <span className="ml-auto badge text-orange-700 bg-orange-100 border-0">Active</span>}
+      </div>
+      <p className="text-xs text-surface-muted mb-3">
+        Pause all briefings and re-engagement messages for a set period. Nothing is deleted.
+      </p>
+      {data?.active ? (
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-orange-700">Paused{data.untilFormatted ? ` until ${data.untilFormatted}` : ''}</span>
+          <button type="button" onClick={() => deactivate.mutate()} disabled={deactivate.isPending} className="btn-secondary !py-1.5 !text-xs">Resume</button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {DURATIONS.map((d) => (
+            <button key={d.value} type="button" onClick={() => activate.mutate(d.value)} disabled={activate.isPending} className="btn-secondary !py-1.5 !text-xs">
+              {d.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Tab = 'feed' | 'settings';
 
@@ -46,6 +92,9 @@ export function Notifications(): JSX.Element {
           </button>
         ))}
       </div>
+
+      {/* Not Now toggle — always visible above tabs (Enhancement 17) */}
+      <NotNowToggle />
 
       {/* Tab content */}
       <div className="min-h-[400px]">

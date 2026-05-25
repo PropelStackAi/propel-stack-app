@@ -8,6 +8,7 @@
  */
 import { db } from '../db.js';
 import { randomUUID } from 'node:crypto';
+import { isUserInNotNowMode } from '../routes/settings.js'; // Enhancement 17
 
 const AWAY_THRESHOLD_HOURS = 72;
 const COOLDOWN_DAYS = 5;
@@ -63,6 +64,9 @@ async function checkReEngagement(): Promise<void> {
       .all(thresholdTime, cooldownTime) as { id: string }[];
 
     for (const user of candidates) {
+      // Enhancement 17: Skip users in Not Now mode
+      if (await isUserInNotNowMode(user.id)) continue;
+
       const msg = randomMessage();
       await db
         .prepare(
