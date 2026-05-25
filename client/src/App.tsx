@@ -73,6 +73,10 @@ const EnergyScheduler    = lazy(() => import('./pages/EnergyScheduler').then(m =
 const BurnoutInsights    = lazy(() => import('./pages/BurnoutInsights').then(m => ({ default: m.BurnoutInsights })));
 const ReferralHub        = lazy(() => import('./pages/ReferralHub').then(m => ({ default: m.ReferralHub })));
 
+// ---- New spec enhancements ----
+const PregnancyHub       = lazy(() => import('./pages/PregnancyHub').then(m => ({ default: m.PregnancyHub })));
+const DashboardCustomize = lazy(() => import('./pages/DashboardCustomize').then(m => ({ default: m.DashboardCustomize })));
+
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
@@ -184,6 +188,9 @@ export function App() {
                   <Route path="/energy"   component={EnergyScheduler} />
                   <Route path="/burnout"  component={BurnoutInsights} />
                   <Route path="/referral" component={ReferralHub} />
+                  {/* New spec enhancements */}
+                  <Route path="/pregnancy"           component={PregnancyHub} />
+                  <Route path="/dashboard/customize" component={DashboardCustomize} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

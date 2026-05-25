@@ -65,10 +65,13 @@ import { goalsRouter }           from './routes/goals.js';             // Sessio
 import { journalRouter }         from './routes/journal.js';           // Session 14 Enh 4: Journal Hub
 import { aiChatRouter }          from './routes/aiChat.js';            // Session 14 Enh 7: AI Chat
 import { touchStreak } from './lib/streaks.js';
-import { energyRouter }       from './routes/energy.js';         // Enhancement 25 — Energy-Aware Scheduling
-import { burnoutRouter }      from './routes/burnout.js';        // Enhancement 26 — Burnout Pattern Detection
-import { referralRouter }     from './routes/referral.js';       // Enhancement 30 — Referral Loop
-import { featureFlagsRouter } from './routes/featureFlags.js';   // Enhancement 32 — A/B Testing Scaffold
+import { energyRouter }          from './routes/energy.js';          // Enhancement 25 — Energy-Aware Scheduling
+import { burnoutRouter }         from './routes/burnout.js';         // Enhancement 26 — Burnout Pattern Detection
+import { referralRouter }        from './routes/referral.js';        // Enhancement 30 — Referral Loop
+import { featureFlagsRouter }    from './routes/featureFlags.js';    // Enhancement 32 — A/B Testing Scaffold
+import { pregnancyRouter }       from './routes/pregnancy.js';       // Pregnancy & Motherhood Hub
+import { dashboardConfigRouter } from './routes/dashboardConfig.js'; // AM Dashboard Widget Config
+import { tabsRouter }            from './routes/tabs.js';             // Customizable Dashboard Tabs
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -168,10 +171,13 @@ app.use('/api/daily-briefing', dailyBriefingRouter);  // Session 14 Enh 2: AI Da
 app.use('/api/goals',          goalsRouter);           // Session 14 Enh 3: Goals & Milestones
 app.use('/api/journal',        journalRouter);         // Session 14 Enh 4: Mood & Journal Hub
 app.use('/api/ai-chat',        aiChatRouter);          // Session 14 Enh 7: AI Chat with Memory
-app.use('/api/energy',         energyRouter);           // Enhancement 25 — Energy-Aware Scheduling
-app.use('/api/burnout',        burnoutRouter);          // Enhancement 26 — Burnout Pattern Detection
-app.use('/api/referral',       referralRouter);         // Enhancement 30 — Referral Loop
-app.use('/api/flags',          featureFlagsRouter);     // Enhancement 32 — Feature Flags & A/B Testing
+app.use('/api/energy',            energyRouter);          // Enhancement 25 — Energy-Aware Scheduling
+app.use('/api/burnout',           burnoutRouter);         // Enhancement 26 — Burnout Pattern Detection
+app.use('/api/referral',          referralRouter);        // Enhancement 30 — Referral Loop
+app.use('/api/flags',             featureFlagsRouter);    // Enhancement 32 — Feature Flags & A/B Testing
+app.use('/api/pregnancy',         pregnancyRouter);       // Pregnancy & Motherhood Hub
+app.use('/api/dashboard-config',  dashboardConfigRouter); // AM Dashboard Widget Config
+app.use('/api/tabs',              tabsRouter);            // Customizable Dashboard Tabs
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

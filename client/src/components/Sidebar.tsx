@@ -9,7 +9,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, Sparkles, Activity, Target, Smile, Clock, BarChart2,
-  Heart, Moon, Zap, BookOpen, ScrollText,
+  Heart, Moon, Zap, BookOpen, ScrollText, Baby, SlidersHorizontal,
   DollarSign, TrendingUp, Scissors,
   Users, UtensilsCrossed, Home, PawPrint,
   Briefcase, GraduationCap, Building2, Network,
@@ -59,8 +59,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/sleep',    label: 'Sleep Coach',      icon: Moon       },
       { href: '/athlete',  label: 'Athlete Hub',      icon: Zap        },
       { href: '/student',  label: 'Student Mode',     icon: BookOpen   },
-      { href: '/energy',   label: 'Energy Scheduler', icon: Zap        },
-      { href: '/burnout',  label: 'Burnout Insights', icon: ShieldAlert},
+      { href: '/energy',    label: 'Energy Scheduler', icon: Zap         },
+      { href: '/burnout',  label: 'Burnout Insights', icon: ShieldAlert },
+      { href: '/pregnancy', label: 'Pregnancy & Baby', icon: Baby        },
     ],
   },
   {
@@ -114,7 +115,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/memory',           label: 'Memory Health',    icon: Brain         },
       { href: '/privacy',          label: 'Privacy & Data',   icon: Lock          },
       { href: '/settings/privacy', label: 'Privacy Settings', icon: Info          },
-      { href: '/referral',         label: 'Refer Friends',    icon: Gift          },
+      { href: '/referral',           label: 'Refer Friends',     icon: Gift               },
+      { href: '/dashboard/customize', label: 'Customize Dashboard', icon: SlidersHorizontal },
     ],
   },
 ];

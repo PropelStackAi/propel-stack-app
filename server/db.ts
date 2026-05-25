@@ -3040,6 +3040,92 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       ON CONFLICT DO NOTHING;
     `,
   },
+
+  // ─── Enhancement: Pregnancy & Motherhood Hub ─────────────────────────────────
+  {
+    version: 111,
+    name: 'pregnancy_hub',
+    sql: `
+      CREATE TABLE IF NOT EXISTS pregnancy_profiles (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        phase TEXT NOT NULL DEFAULT 'trying', -- 'trying'|'pregnant'|'postpartum'
+        lmp_date TEXT,                         -- last menstrual period YYYY-MM-DD
+        due_date TEXT,                         -- YYYY-MM-DD
+        baby_name TEXT,
+        week_override INTEGER,                 -- manual week override
+        cycle_length INTEGER NOT NULL DEFAULT 28,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS baby_logs (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        profile_id INTEGER NOT NULL REFERENCES pregnancy_profiles(id) ON DELETE CASCADE,
+        log_type TEXT NOT NULL,               -- 'kick'|'feeding'|'sleep'|'diaper'|'weight'|'symptom'
+        log_value TEXT,
+        log_date TEXT NOT NULL DEFAULT TO_CHAR(NOW(), 'YYYY-MM-DD'),
+        note TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS cycle_tracking (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        cycle_date TEXT NOT NULL,             -- YYYY-MM-DD
+        period_flow TEXT,                     -- 'none'|'light'|'medium'|'heavy'
+        symptoms TEXT NOT NULL DEFAULT '[]',  -- JSON array
+        mood TEXT,
+        basal_temp REAL,
+        cm_type TEXT,                         -- cervical mucus
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, cycle_date)
+      );
+    `,
+  },
+
+  // ─── Enhancement: AM Dashboard Widget Config ──────────────────────────────────
+  {
+    version: 112,
+    name: 'dashboard_config',
+    sql: `
+      CREATE TABLE IF NOT EXISTS dashboard_config (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+        widgets_enabled TEXT NOT NULL DEFAULT '["morning_briefing","life_score","goals","streaks","mood","energy","finance","health"]',
+        widget_order TEXT NOT NULL DEFAULT '[]',
+        briefing_time TEXT NOT NULL DEFAULT '07:00',
+        compact_mode BOOLEAN NOT NULL DEFAULT false,
+        auto_refresh BOOLEAN NOT NULL DEFAULT true,
+        refresh_interval_mins INTEGER NOT NULL DEFAULT 30,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `,
+  },
+
+  // ─── Enhancement: Customizable Dashboard Tabs ────────────────────────────────
+  {
+    version: 113,
+    name: 'user_tabs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS user_tabs (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        tab_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        icon TEXT NOT NULL DEFAULT 'layout-dashboard',
+        tab_type TEXT NOT NULL DEFAULT 'built-in', -- 'built-in'|'custom'
+        href TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_visible BOOLEAN NOT NULL DEFAULT true,
+        accent TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, tab_key)
+      );
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {
