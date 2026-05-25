@@ -74,6 +74,9 @@ const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ d
 // ---- Enhancement 4-6: Onboarding ----
 const Onboarding         = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
 
+// ---- Enhancement 7-8: Briefing & Weekly Review ----
+const WeeklyReview       = lazy(() => import('./pages/WeeklyReview').then(m => ({ default: m.WeeklyReview })));
+
 // ---- Upgraded legacy hubs ----
 const FamilyHub          = lazy(() => import('./pages/FamilyHub').then(m => ({ default: m.FamilyHub })));
 const SmartKitchen       = lazy(() => import('./pages/SmartKitchen').then(m => ({ default: m.SmartKitchen })));
@@ -154,6 +157,7 @@ export function App() {
                   <Route path="/calendar" component={CalendarHub} />
                   <Route path="/financial-score" component={FinancialScore} />
                   <Route path="/memory" component={MemoryHub} />
+                  <Route path="/review" component={WeeklyReview} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

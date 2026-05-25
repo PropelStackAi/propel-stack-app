@@ -51,6 +51,28 @@ export interface Brief {
   counts: { dueTasks: number; dueBills: number; overdueFollowUps: number };
 }
 
+// Enhancement 7: Structured morning briefing (from /api/briefing/today)
+export interface StructuredBrief {
+  headline: string;
+  priorities: string[];
+  insight: string;
+  motivation: string;
+  generatedAt: string;
+  cached?: boolean;
+  stub?: boolean;
+}
+
+// Enhancement 8: Weekly life review (from /api/briefing/weekly)
+export interface WeeklyReview {
+  weekStart: string;
+  narrative: string;
+  highlights: string[];
+  focusNext: string;
+  generatedAt: string;
+  cached?: boolean;
+  stub?: boolean;
+}
+
 export type CaptureKind = 'task' | 'note' | 'contact' | 'expense';
 
 export const CAPTURE_LABELS: Record<CaptureKind, string> = {

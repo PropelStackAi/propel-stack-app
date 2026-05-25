@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/apiRequest';
-import type { Activity, Agenda, Brief, CaptureKind, Habit, Summary, Task, Weather } from './types';
+import type { Activity, Agenda, Brief, CaptureKind, Habit, StructuredBrief, Summary, Task, Weather, WeeklyReview } from './types';
 
 // HARD RULE #3: object form. HARD RULE #4: apiRequest returns parsed JSON.
 
@@ -24,6 +24,48 @@ export function useActivity() {
 }
 export function useBrief() {
   return useQuery({ queryKey: K.brief, queryFn: () => apiRequest<Brief>('/api/dashboard/brief'), staleTime: 60 * 60_000 });
+}
+
+// Enhancement 7: Structured morning briefing
+export function useTodayBriefing() {
+  return useQuery({
+    queryKey: ['briefing', 'today'],
+    queryFn: () => apiRequest<StructuredBrief>('/api/briefing/today'),
+    staleTime: 60 * 60_000,
+  });
+}
+export function useRegenerateBriefing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<StructuredBrief>('/api/briefing/generate', { method: 'POST' }),
+    onSuccess: (data) => qc.setQueryData(['briefing', 'today'], data),
+  });
+}
+
+// Enhancement 8: Weekly life reviews
+export function useWeeklyReview() {
+  return useQuery({
+    queryKey: ['briefing', 'weekly'],
+    queryFn: () => apiRequest<WeeklyReview>('/api/briefing/weekly'),
+    staleTime: 60 * 60_000,
+  });
+}
+export function useWeeklyReviews() {
+  return useQuery({
+    queryKey: ['briefing', 'weekly-list'],
+    queryFn: () => apiRequest<WeeklyReview[]>('/api/briefing/weekly/list'),
+    staleTime: 60 * 60_000,
+  });
+}
+export function useRegenerateWeeklyReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<WeeklyReview>('/api/briefing/generate-weekly', { method: 'POST' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['briefing', 'weekly'] });
+      qc.invalidateQueries({ queryKey: ['briefing', 'weekly-list'] });
+    },
+  });
 }
 export function useWeather(lat: number | null, lon: number | null) {
   return useQuery({

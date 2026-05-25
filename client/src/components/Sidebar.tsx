@@ -9,7 +9,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, Sparkles, Activity, Target, Smile, Clock, Calendar, BarChart2,
-  Heart, Moon, Zap, BookOpen,
+  Heart, Moon, Zap, BookOpen, ScrollText,
   DollarSign, TrendingUp, Scissors,
   Users, UtensilsCrossed, Home, PawPrint,
   Briefcase, GraduationCap, Building2, Network,
@@ -44,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/timeline',        label: 'Life Timeline',     icon: Clock       },
       { href: '/life-events',     label: 'Life Events',       icon: Calendar    },
       { href: '/recap',           label: 'Weekly Recap',      icon: BarChart2   },
+      { href: '/review',          label: 'Weekly Review',     icon: ScrollText  },
     ],
   },
   {

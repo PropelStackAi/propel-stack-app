@@ -55,6 +55,8 @@ import { networkHubRouter }  from './routes/networkHub.js';    // Legacy upgrade
 import { memoryRouter }      from './routes/memory.js';        // Enhancement 1-3: Three-Tier Memory
 import { startMemoryAnalysisScheduler } from './jobs/memoryAnalysis.js'; // Enhancement 3
 import { onboardingRouter }  from './routes/onboarding.js';   // Enhancement 4-6: Onboarding
+import { briefingRouter }    from './routes/briefing.js';     // Enhancement 7-8: Briefing & Weekly Review
+import { startBriefingScheduler } from './jobs/briefingJob.js'; // Enhancement 7-8
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -148,6 +150,7 @@ app.use('/api/life-events',  lifeEventsRouter);   // Life Events Hub
 app.use('/api/network',      networkHubRouter);   // Network Hub
 app.use('/api/memory',       memoryRouter);       // Enhancement 1-3: Three-Tier Memory System
 app.use('/api/onboarding',   onboardingRouter);   // Enhancement 4-6: Onboarding
+app.use('/api/briefing',     briefingRouter);     // Enhancement 7-8: Briefing & Weekly Review
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
@@ -173,6 +176,7 @@ initDb()
     app.listen(PORT, () => {
       console.log(`[server] listening on http://localhost:${PORT}`);
       startMemoryAnalysisScheduler(); // Enhancement 3: Longitudinal Trend Detection
+      startBriefingScheduler();       // Enhancement 7-8: Morning Briefing + Weekly Review
     });
   })
   .catch((err) => {

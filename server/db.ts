@@ -2559,6 +2559,57 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement 7-8: Morning Briefings + Weekly Life Review ─────────────────
+  {
+    version: 94,
+    name: 'morning_briefings',
+    sql: `
+      CREATE TABLE IF NOT EXISTS morning_briefings (
+        id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id      TEXT        NOT NULL,
+        briefing_date DATE       NOT NULL,
+        headline     TEXT        NOT NULL DEFAULT '',
+        priorities   JSONB       NOT NULL DEFAULT '[]',
+        insight      TEXT        NOT NULL DEFAULT '',
+        motivation   TEXT        NOT NULL DEFAULT '',
+        generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_mb_user_date ON morning_briefings(user_id, briefing_date);
+    `,
+  },
+  {
+    version: 95,
+    name: 'weekly_reviews',
+    sql: `
+      CREATE TABLE IF NOT EXISTS weekly_reviews (
+        id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id      TEXT        NOT NULL,
+        week_start   DATE        NOT NULL,
+        narrative    TEXT        NOT NULL DEFAULT '',
+        highlights   JSONB       NOT NULL DEFAULT '[]',
+        focus_next   TEXT        NOT NULL DEFAULT '',
+        generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_wr_user_week ON weekly_reviews(user_id, week_start);
+    `,
+  },
+  {
+    version: 96,
+    name: 'push_tokens',
+    sql: `
+      CREATE TABLE IF NOT EXISTS push_tokens (
+        id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id      TEXT        NOT NULL,
+        token        TEXT        NOT NULL,
+        platform     TEXT        NOT NULL DEFAULT 'web',
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_pt_token ON push_tokens(token);
+      CREATE INDEX IF NOT EXISTS idx_pt_user ON push_tokens(user_id);
+    `,
+  },
+
   // ─── Enhancement — Three-Tier Memory System (Enhancements 1-3) ─────────────
   {
     version: 88,
