@@ -14,7 +14,7 @@ import {
   Users, UtensilsCrossed, Home, PawPrint,
   Briefcase, GraduationCap, Building2, Network,
   Share2, HeartHandshake, CircleDot, Plane,
-  MessageCircle, FileText, Shield, Plug, Lock,
+  MessageCircle, FileText, Shield, Plug, Lock, Brain,
   Settings, Bell, ChevronDown, type LucideIcon,
 } from 'lucide-react';
 import { useUnreadCount } from '../features/notifications/api';
@@ -103,6 +103,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/documents',        label: 'Document Vault',   icon: FileText      },
       { href: '/estate',           label: 'Estate & Legacy',  icon: Shield        },
       { href: '/apps',             label: 'Connected Apps',   icon: Plug          },
+      { href: '/memory',           label: 'Memory Health',    icon: Brain         },
       { href: '/settings/privacy', label: 'Privacy & Security', icon: Lock        },
     ],
   },

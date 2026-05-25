@@ -68,6 +68,9 @@ const WidgetSettings     = lazy(() => import('./pages/WidgetSettings').then(m =>
 const CalendarHub        = lazy(() => import('./pages/CalendarHub').then(m => ({ default: m.CalendarHub })));
 const FinancialScore     = lazy(() => import('./pages/FinancialScore').then(m => ({ default: m.FinancialScore })));
 
+// ---- Enhancement 1-3: Three-Tier Memory System ----
+const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
+
 // ---- Upgraded legacy hubs ----
 const FamilyHub          = lazy(() => import('./pages/FamilyHub').then(m => ({ default: m.FamilyHub })));
 const SmartKitchen       = lazy(() => import('./pages/SmartKitchen').then(m => ({ default: m.SmartKitchen })));
@@ -144,6 +147,7 @@ export function App() {
                   <Route path="/widgets" component={WidgetSettings} />
                   <Route path="/calendar" component={CalendarHub} />
                   <Route path="/financial-score" component={FinancialScore} />
+                  <Route path="/memory" component={MemoryHub} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

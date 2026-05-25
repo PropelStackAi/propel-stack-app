@@ -2530,6 +2530,79 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement — Three-Tier Memory System (Enhancements 1-3) ─────────────
+  {
+    version: 88,
+    name: 'three_tier_memory',
+    sql: `
+      CREATE TABLE IF NOT EXISTS user_memories (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id     TEXT        NOT NULL,
+        namespace   TEXT        NOT NULL CHECK (namespace IN ('episodic','semantic','procedural')),
+        content     TEXT        NOT NULL,
+        context_key TEXT,
+        metadata    JSONB       NOT NULL DEFAULT '{}',
+        relevance   REAL        NOT NULL DEFAULT 1.0,
+        is_stale    BOOLEAN     NOT NULL DEFAULT FALSE,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at  TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_um_user_ns      ON user_memories(user_id, namespace);
+      CREATE INDEX IF NOT EXISTS idx_um_user_created ON user_memories(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_um_user_ctx     ON user_memories(user_id, context_key);
+    `,
+  },
+  {
+    version: 89,
+    name: 'memory_audit_log',
+    sql: `
+      CREATE TABLE IF NOT EXISTS memory_audit_log (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id     TEXT        NOT NULL,
+        action      TEXT        NOT NULL,
+        namespace   TEXT,
+        item_id     UUID,
+        description TEXT,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mal_user ON memory_audit_log(user_id, created_at DESC);
+    `,
+  },
+  {
+    version: 90,
+    name: 'memory_trends',
+    sql: `
+      CREATE TABLE IF NOT EXISTS memory_trends (
+        id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id      TEXT        NOT NULL,
+        trend_type   TEXT        NOT NULL,
+        description  TEXT        NOT NULL,
+        confidence   REAL        NOT NULL DEFAULT 0.5,
+        period_start TIMESTAMPTZ,
+        period_end   TIMESTAMPTZ,
+        data         JSONB       NOT NULL DEFAULT '{}',
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mt_user ON memory_trends(user_id, created_at DESC);
+    `,
+  },
+  {
+    version: 91,
+    name: 'memory_job_runs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS memory_job_runs (
+        id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id   TEXT        NOT NULL,
+        job_type  TEXT        NOT NULL,
+        status    TEXT        NOT NULL DEFAULT 'pending',
+        result    JSONB,
+        ran_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mjr_user ON memory_job_runs(user_id, job_type, ran_at DESC);
+    `,
+  },
+
   // ─── Session 15 — AI Weekly Life Recap ─────────────────────────────────────
   {
     version: 50,

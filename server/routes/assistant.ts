@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { db, getCurrentUserId } from '../db.js';
 import { scrubPII } from '../middleware/piiScrubber.js'; // Enhancement 41
+import { buildMemoryContext, logEpisodic } from '../lib/memoryStore.js'; // Enhancement 1-2
 import {
   complete,
   estimateCost,
@@ -139,16 +140,21 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
   );
   send('user', { id: userMsgId });
 
+  // Enhancement 2: Cross-Session Context Stitching — prepend memory context to every conversation
+  const memCtx = await buildMemoryContext(userId).catch(() => '');
+  const baseSystemPrompt =
+    mode === 'finance'
+      ? 'You provide general financial education only. Never give personalized advice. Recommend a licensed professional.'
+      : 'You are a proactive Life OS assistant. Be concise, warm, and action-oriented.';
+  const systemPromptWithMemory = memCtx + baseSystemPrompt;
+
   let result;
   try {
     result = complete({
       prompt: scrubPII(message), // Enhancement 41: strip PII before AI
       model,
       mode,
-      systemPrompt:
-        mode === 'finance'
-          ? 'You provide general financial education only. Never give personalized advice. Recommend a licensed professional.'
-          : undefined,
+      systemPrompt: systemPromptWithMemory,
     });
   } catch (err) {
     if (err instanceof TokenBudgetExceededError) {
@@ -174,6 +180,10 @@ assistantRouter.get('/stream', async (req: Request, res: Response) => {
     'INSERT INTO ai_messages (id, conversation_id, user_id, role, content, tokens_in, tokens_out, model) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   ).run(asstId, conversationId, userId, 'assistant', result.text, result.tokensIn, result.tokensOut, result.model);
   await db.prepare('UPDATE ai_conversations SET updated_at = NOW() WHERE id = ?').run(conversationId);
+
+  // Enhancement 1: Log this exchange as an episodic memory for future context stitching
+  const episodicSummary = `User asked: "${message.slice(0, 120)}${message.length > 120 ? '…' : ''}"`;
+  logEpisodic(userId, episodicSummary, mode).catch(() => {/* non-fatal */});
 
   if (!closed) {
     send('done', {

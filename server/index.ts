@@ -52,6 +52,8 @@ import { familyHubRouter }   from './routes/familyHub.js';     // Legacy upgrade
 import { awarenessRouter }   from './routes/awareness.js';     // Legacy upgrade
 import { lifeEventsRouter }  from './routes/lifeEvents.js';    // Legacy upgrade
 import { networkHubRouter }  from './routes/networkHub.js';    // Legacy upgrade
+import { memoryRouter }      from './routes/memory.js';        // Enhancement 1-3: Three-Tier Memory
+import { startMemoryAnalysisScheduler } from './jobs/memoryAnalysis.js'; // Enhancement 3
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -143,6 +145,7 @@ app.use('/api/family',       familyHubRouter);    // Family Hub
 app.use('/api/awareness',    awarenessRouter);     // Awareness Hub
 app.use('/api/life-events',  lifeEventsRouter);   // Life Events Hub
 app.use('/api/network',      networkHubRouter);   // Network Hub
+app.use('/api/memory',       memoryRouter);       // Enhancement 1-3: Three-Tier Memory System
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
@@ -167,6 +170,7 @@ initDb()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`[server] listening on http://localhost:${PORT}`);
+      startMemoryAnalysisScheduler(); // Enhancement 3: Longitudinal Trend Detection
     });
   })
   .catch((err) => {
