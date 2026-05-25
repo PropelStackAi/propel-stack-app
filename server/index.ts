@@ -54,6 +54,7 @@ import { lifeEventsRouter }  from './routes/lifeEvents.js';    // Legacy upgrade
 import { networkHubRouter }  from './routes/networkHub.js';    // Legacy upgrade
 import { memoryRouter }      from './routes/memory.js';        // Enhancement 1-3: Three-Tier Memory
 import { startMemoryAnalysisScheduler } from './jobs/memoryAnalysis.js'; // Enhancement 3
+import { onboardingRouter }  from './routes/onboarding.js';   // Enhancement 4-6: Onboarding
 import { touchStreak } from './lib/streaks.js';
 
 const app = express();
@@ -88,7 +89,7 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/me', async (_req, res) => {
   const userId = getCurrentUserId();
   const user = await db
-    .prepare('SELECT id, email, display_name, plan_tier, ai_tokens_used_this_month FROM users WHERE id = ?')
+    .prepare('SELECT id, email, display_name, plan_tier, ai_tokens_used_this_month, onboarding_completed_at FROM users WHERE id = ?')
     .get(userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   // Touch daily_login streak on every app open (Session 16)
@@ -146,6 +147,7 @@ app.use('/api/awareness',    awarenessRouter);     // Awareness Hub
 app.use('/api/life-events',  lifeEventsRouter);   // Life Events Hub
 app.use('/api/network',      networkHubRouter);   // Network Hub
 app.use('/api/memory',       memoryRouter);       // Enhancement 1-3: Three-Tier Memory System
+app.use('/api/onboarding',   onboardingRouter);   // Enhancement 4-6: Onboarding
 
 // ---- Static client (production only) ----
 if (IS_PROD) {

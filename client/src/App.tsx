@@ -71,6 +71,9 @@ const FinancialScore     = lazy(() => import('./pages/FinancialScore').then(m =>
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
+// ---- Enhancement 4-6: Onboarding ----
+const Onboarding         = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
+
 // ---- Upgraded legacy hubs ----
 const FamilyHub          = lazy(() => import('./pages/FamilyHub').then(m => ({ default: m.FamilyHub })));
 const SmartKitchen       = lazy(() => import('./pages/SmartKitchen').then(m => ({ default: m.SmartKitchen })));
@@ -89,6 +92,9 @@ export function App() {
         <Switch>
           {/* Emergency Mode is intentionally OUTSIDE the layout chrome */}
           <Route path="/emergency" component={EmergencyMode} />
+
+          {/* Onboarding wizard — outside layout chrome */}
+          <Route path="/onboard" component={Onboarding} />
 
           {/* All other routes render inside the app shell */}
           <Route>

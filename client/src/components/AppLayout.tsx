@@ -4,8 +4,8 @@
  * Desktop: dark grouped-collapsible sidebar (220px) + main content area.
  * Mobile:  full-width content + fixed bottom tab bar + HubSheet overlay.
  */
-import { type ReactNode } from 'react';
-import { Link } from 'wouter';
+import { type ReactNode, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/apiRequest';
 import { QuickCapture } from '../features/dashboard/components/QuickCapture';
@@ -18,6 +18,7 @@ interface User {
   display_name: string;
   plan_tier: string;
   ai_tokens_used_this_month: number;
+  onboarding_completed_at: string | null;
 }
 
 function Logo() {
@@ -54,10 +55,18 @@ function MobileHeader({ user }: { user?: User }) {
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
+  const [, navigate] = useLocation();
   const { data: user } = useQuery({
     queryKey: ['me'],
     queryFn: () => apiRequest<User>('/api/me'),
   });
+
+  // Enhancement 4: Redirect new users to onboarding wizard
+  useEffect(() => {
+    if (user && user.onboarding_completed_at === null) {
+      navigate('/onboard');
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen flex bg-surface">

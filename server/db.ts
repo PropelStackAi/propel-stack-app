@@ -2530,6 +2530,35 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
     `,
   },
 
+  // ─── Enhancement — Onboarding (Enhancements 4-6) ────────────────────────────
+  {
+    version: 92,
+    name: 'onboarding_fields',
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_persona TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_goal_category TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_goal TEXT;
+      -- Existing users (including demo-user) skip onboarding — backward compat
+      UPDATE users SET onboarding_completed_at = NOW() WHERE onboarding_completed_at IS NULL;
+    `,
+  },
+  {
+    version: 93,
+    name: 'onboarding_connections',
+    sql: `
+      CREATE TABLE IF NOT EXISTS onboarding_connections (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id     TEXT        NOT NULL,
+        provider    TEXT        NOT NULL,
+        status      TEXT        NOT NULL DEFAULT 'pending',
+        metadata    JSONB       NOT NULL DEFAULT '{}',
+        connected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_oc_user_provider ON onboarding_connections(user_id, provider);
+    `,
+  },
+
   // ─── Enhancement — Three-Tier Memory System (Enhancements 1-3) ─────────────
   {
     version: 88,
