@@ -284,3 +284,97 @@ onboardingRouter.get('/connections', async (_req: Request, res: Response) => {
     .all(userId);
   res.json(rows);
 });
+
+// ─── Segment / tier / role routing — Enterprise onboarding ───────────────────
+
+/**
+ * POST /api/onboarding/segment
+ * Set the user's segment track, tier, and role.
+ * Called from SegmentSelector and RoleSelector components.
+ */
+onboardingRouter.post('/segment', async (req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId();
+    const { track, tier, role } = req.body as {
+      track?: 'consumer' | 'education' | 'business';
+      tier?: string;
+      role?: string;
+    };
+
+    const updates: string[] = [];
+    const values: unknown[] = [];
+
+    if (track) { updates.push(`onboarding_track = $${updates.length + 1}`); values.push(track); }
+    if (tier)  { updates.push(`onboarding_tier  = $${updates.length + 1}`); values.push(tier);  }
+    if (role)  { updates.push(`onboarding_role  = $${updates.length + 1}`); values.push(role);  }
+
+    if (updates.length > 0) {
+      values.push(userId);
+      await db.prepare(
+        `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`
+      ).run(...values);
+    }
+
+    res.json({ ok: true, track, tier, role });
+  } catch (err: unknown) {
+    console.error('[onboarding] segment error:', err);
+    res.status(500).json({ error: 'Failed to save segment' });
+  }
+});
+
+/**
+ * GET /api/onboarding/stage
+ * Returns the user's current onboarding state.
+ */
+onboardingRouter.get('/stage', async (_req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId();
+    const user = await db.prepare(
+      `SELECT onboarding_track, onboarding_tier, onboarding_role, onboarding_stage,
+              verification_state, integration_state, onboarding_completed_at
+       FROM users WHERE id = $1`
+    ).get(userId) as {
+      onboarding_track: string; onboarding_tier: string; onboarding_role: string;
+      onboarding_stage: string; verification_state: string; integration_state: unknown;
+      onboarding_completed_at: string | null;
+    } | undefined;
+
+    res.json(user ?? { onboarding_track: 'consumer', onboarding_stage: 'account_created' });
+  } catch (err: unknown) {
+    console.error('[onboarding] stage error:', err);
+    res.status(500).json({ error: 'Failed to load stage' });
+  }
+});
+
+/**
+ * POST /api/onboarding/stage
+ * Advance or set the onboarding stage for the current user.
+ */
+onboardingRouter.post('/stage', async (req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId();
+    const { stage } = req.body as { stage: string };
+    const validStages = [
+      'preboarding', 'account_created', 'segment_selected', 'workspace_configured',
+      'integrations_connected', 'first_success', 'active', 'review_due',
+    ];
+    if (!validStages.includes(stage)) {
+      return res.status(400).json({ error: `Invalid stage. Must be one of: ${validStages.join(', ')}` });
+    }
+
+    await db.prepare(
+      `UPDATE users SET onboarding_stage = $1, updated_at = NOW() WHERE id = $2`
+    ).run(stage, userId);
+
+    if (stage === 'first_success') {
+      await db.prepare(
+        `UPDATE users SET onboarding_completed_at = NOW() WHERE id = $1 AND onboarding_completed_at IS NULL`
+      ).run(userId);
+    }
+
+    res.json({ ok: true, stage });
+  } catch (err: unknown) {
+    console.error('[onboarding] stage update error:', err);
+    res.status(500).json({ error: 'Failed to update stage' });
+  }
+});

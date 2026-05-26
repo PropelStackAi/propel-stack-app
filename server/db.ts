@@ -3261,6 +3261,76 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_dpa_acceptances_org  ON dpa_acceptances(org_id);
     `,
   },
+
+  {
+    version: 120,
+    name: 'workspaces_enterprise_onboarding',
+    sql: `
+      -- Enterprise onboarding: segment/tier/role/stage on users
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_track TEXT NOT NULL DEFAULT 'consumer';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_tier  TEXT NOT NULL DEFAULT 'spark';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_role  TEXT NOT NULL DEFAULT 'individual';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_stage TEXT NOT NULL DEFAULT 'account_created';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_state TEXT NOT NULL DEFAULT 'none';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS integration_state  JSONB NOT NULL DEFAULT '{}';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS seat_allocation     INTEGER;
+
+      -- Workspaces
+      CREATE TABLE IF NOT EXISTS workspaces (
+        id          TEXT        PRIMARY KEY,
+        owner_id    TEXT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name        TEXT        NOT NULL,
+        type        TEXT        NOT NULL DEFAULT 'team',
+        track       TEXT        NOT NULL DEFAULT 'business',
+        config      JSONB       NOT NULL DEFAULT '{}',
+        max_seats   INTEGER,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_workspaces_owner ON workspaces(owner_id);
+
+      -- Workspace members
+      CREATE TABLE IF NOT EXISTS workspace_members (
+        id            TEXT        PRIMARY KEY,
+        workspace_id  TEXT        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+        user_id       TEXT        REFERENCES users(id) ON DELETE SET NULL,
+        role          TEXT        NOT NULL DEFAULT 'member',
+        status        TEXT        NOT NULL DEFAULT 'active',
+        invited_at    TIMESTAMPTZ,
+        joined_at     TIMESTAMPTZ,
+        UNIQUE (workspace_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_workspace_members_ws   ON workspace_members(workspace_id);
+      CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON workspace_members(user_id);
+
+      -- Workspace invites / join codes
+      CREATE TABLE IF NOT EXISTS workspace_invites (
+        id            TEXT        PRIMARY KEY,
+        workspace_id  TEXT        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+        join_code     TEXT,
+        email         TEXT,
+        role          TEXT        NOT NULL DEFAULT 'member',
+        created_by    TEXT,
+        expires_at    TIMESTAMPTZ,
+        used_at       TIMESTAMPTZ,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (workspace_id, email)
+      );
+      CREATE INDEX IF NOT EXISTS idx_workspace_invites_code ON workspace_invites(join_code);
+      CREATE INDEX IF NOT EXISTS idx_workspace_invites_ws   ON workspace_invites(workspace_id);
+
+      -- Workspace launch checklist items
+      CREATE TABLE IF NOT EXISTS workspace_checklist_items (
+        id            TEXT        PRIMARY KEY,
+        workspace_id  TEXT        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+        item_key      TEXT        NOT NULL,
+        completed     BOOLEAN     NOT NULL DEFAULT FALSE,
+        completed_at  TIMESTAMPTZ,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (workspace_id, item_key)
+      );
+    `,
+  },
 ];
 
 export async function runMigrations(): Promise<void> {

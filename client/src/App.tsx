@@ -88,6 +88,9 @@ const SsoPortal          = lazy(() => import('./pages/SsoPortal').then(m => ({ d
 const DataProcessingAgreement = lazy(() => import('./pages/DataProcessingAgreement').then(m => ({ default: m.DataProcessingAgreement })));
 const SecurityAudit      = lazy(() => import('./pages/SecurityAudit').then(m => ({ default: m.SecurityAudit })));
 
+// ---- Enterprise Onboarding — Workspaces & Adoption ----
+const AdoptionDashboard  = lazy(() => import('./pages/AdoptionDashboard').then(m => ({ default: m.AdoptionDashboard })));
+
 // ---- Enhancement 1-3: Three-Tier Memory System ----
 const MemoryHub          = lazy(() => import('./pages/MemoryHub').then(m => ({ default: m.MemoryHub })));
 
@@ -213,6 +216,8 @@ export function App() {
                   {/* Enhancement 36 / 43 — DPA & Security Audit */}
                   <Route path="/dpa"             component={DataProcessingAgreement} />
                   <Route path="/admin/security"  component={SecurityAudit} />
+                  {/* Enterprise Onboarding — Adoption Dashboard */}
+                  <Route path="/workspaces/:id/adoption" component={AdoptionDashboard} />
                   <Route component={NotFound} />
                 </Switch>
               </Suspense>

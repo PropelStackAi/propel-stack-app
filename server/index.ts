@@ -80,6 +80,7 @@ import { ssoRouter }              from './routes/sso.js';               // Phase
 import { billingRouter }          from './routes/billing.js';            // Phase 3 Step 10 — Billing Checkout
 import { pushTokensRouter }       from './routes/pushTokens.js';         // Phase 3 Step 8 — Push Token Registry
 import { dpaRouter }              from './routes/dpa.js';                // Enhancement 36 — Data Processing Agreements
+import { workspacesRouter }       from './routes/workspaces.js';         // Enterprise Onboarding — Workspaces
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -193,6 +194,7 @@ app.use('/api/sso',               ssoRouter);              // Phase 4 — SSO Pa
 app.use('/api/billing',           billingRouter);          // Phase 3 Step 10 — Billing Checkout & Portal
 app.use('/api/push-tokens',       pushTokensRouter);       // Phase 3 Step 8 — Push Token Registry
 app.use('/api/dpa',               dpaRouter);              // Enhancement 36 — Data Processing Agreements
+app.use('/api/workspaces',        workspacesRouter);       // Enterprise Onboarding — Workspaces
 
 // ---- Static client (production only) ----
 if (IS_PROD) {
